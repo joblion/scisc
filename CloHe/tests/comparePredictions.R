@@ -1,0 +1,5 @@
+library("CloHe")
+data(formosat)
+res <- learnGaussian(formosat)
+buildConfusionMatrix(formosat$labels, res$predict)
+predictGaussianMutSigmat(formosat$xb, formosat$xg, formosat$xr, formosat$xi, formosat$clouds, formosat$labels, res$models)

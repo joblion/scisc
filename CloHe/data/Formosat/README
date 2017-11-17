@@ -1,0 +1,22 @@
+Voici la structure des données:
+
+Nom du fichiers: chiffre_année.csv ->, ou le chiffre correspond à la
+bande spectrale (1->B,2->G,3->R,4->IR). 1_2006.csv correspond donc à
+l'ensemble des mesures de l'année 2006 pour la bande bleu.
+
+Le format des données en lui même. Sur chaque ligne, il y a un
+pixel. Pour chaque pixel, dans l'ordre vous avez pour chaque colonne:
+
+La classe (entre 1 et 13); les nuages; les valeurs de réflectance.
+
+Si une ligne contient 41 colonnes: la première colonnes est la classe,
+les 20 suivantes correspond aux nuages/ombres (>0 si il y a quelques
+chose, i.e., valeur aberrante) et les 20 suivantes correspondent au
+valeur de reflectance pour le bleu.
+
+Je joins aussi les dates d'acquisition pour chaque année. Normalement,
+tout doit correspondre, mais on a vu cela rapidement avec Serge, donc il
+peut y avoir des erreurs. Tenez moi au courant. Il doit avoir le même
+nombre de lignes pour chaque fichiers, car le nombre de pixel de
+références est constant, mais par contre, le nombre de colonnes peut
+changer (mais il est constant sur une année).
