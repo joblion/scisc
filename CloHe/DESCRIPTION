@@ -19,7 +19,6 @@ SystemRequirements: GNU make
 Collate:
     readFormosatFiles.R
     readSentinelFiles.R
-    readSentinelRawFiles.R
     global.R
     ICloHeModel.R
     GaussianMutSigmatModel.R

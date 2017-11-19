@@ -94,9 +94,17 @@ class FuncSpectra: public IClassification< Labels
                , String const& kernelName, Real const& h
                , int dim, int degree, String const& posKnots
                , String const& criterion);
+    /** Default constructor
+     *  @param handler data handler
+     *  @param dim number of base functions to use
+     **/
+    FuncSpectra( Handler const& handler
+               , String const& kernelName, Real const& h
+               , CPointXi const& dim, int degree, String const& posKnots
+               , String const& criterion);
     /** destructor */
     virtual ~FuncSpectra() {}
-
+    // data handler
     /** @return the number of sample */
     inline int nbSample() const { return handler_.nbSample();}
     /** @return the number of spectrum */
@@ -107,20 +115,22 @@ class FuncSpectra: public IClassification< Labels
     inline CPointXi const& nk() const { return handler_.nk();}
     /** number of available sampling for each sample */
     inline CPointXi const& ni() const { return handler_.ni();}
-
     /** @return labels of all pixels */
     Labels const& labels() const { return handler_.labels();}
     /** @return labels of pixel i*/
     inline int labels(int i) const { return handler_.labels()[i];}
-
     /** @return sampling times for all pixels */
     Times const& times() const { return handler_.times();}
     /** @return sampling times of pixel i */
     CPointX const& times(int i) const { return handler_.times()[i];}
-
     /** spectrum of the pixel i at time t */
     Spectra const& data(int i, int t) const { return handler_.data()[i][t];}
-
+    // designer
+    /** @return a reference on the array of knots */
+    VectorX const& knots() const { return designer_.knots();}
+	/** @return a reference on the array of coefficients */
+    ArrayXX const& coefficients() const { return designer_.coefficients();}
+    // getters
     /** @return regression coefficients */
     YArrays const& alpha() const {return alpha_;}
     /** @return estimated variance */
@@ -133,18 +143,12 @@ class FuncSpectra: public IClassification< Labels
     CPointXi const& nbFreeParameters() const { return nbFreeParameters_;}
     /** @return the determinant of the covariance matrix of each pixel */
     CVectorX const& det() const { return det_;}
-
     /** @return the prior probabilities of each class */
     CPointX const& pk() const { return pk_;}
     /** @return the posterior probabilities of each class */
     CArrayXX const& tik() const { return tik_;}
-
-    /** @return a reference on the array of knots */
-    VectorX const& knots() const { return designer_.knots();}
-    /** @return a reference on the array of knots */
-    /** @return a reference on the array of coefficients */
-    ArrayXX const& coefficients() const { return designer_.coefficients();}
-
+    /** @return a reference on the array of dimensions */
+    CPointXi const& dim() const { return dim_;}
     /** @return the predicted labels of each pixel */
     Labels const& zi() const { return zi_;}
 
@@ -212,7 +216,7 @@ class FuncSpectra: public IClassification< Labels
     /** compute the matrices predicted values, the residuals and the variances */
     void computeVariances();
 };
-
+/* default constructor */
 template<int Size_, class Weights_>
 FuncSpectra<Size_, Weights_>::FuncSpectra( Handler const& handler
                                          , String const& kernelName, Real const& h
@@ -223,6 +227,36 @@ FuncSpectra<Size_, Weights_>::FuncSpectra( Handler const& handler
                                          , handler_(handler)
                                          , designer_(handler.times(), kernelName, h, dim, degree, posKnots)
                                          , dim_(handler_.nbClass(), dim)
+                                         , type_(Model::stringToTypeCriterion(criterion))
+                                         , zi_(handler_.nbSample())
+                                         , alpha_(handler_.nbClass())
+                                         , sigma2_(handler_.nbClass())
+                                         , lnLikelihood_(handler_.nbClass(), -Arithmetic<Real>::infinity())
+                                         , criterion_(handler_.nbClass(), Arithmetic<Real>::infinity())
+                                         , nbFreeParameters_(handler_.nbClass(), 0)
+                                         , det_(handler_.nbSample())
+                                         , pk_(handler_.nbClass())
+                                         , tik_(handler_.nbSample(),handler_.nbClass())
+                                         , sizek_(handler_.nbClass(), 0)
+                                         , xtx_jj_(handler_.nbClass())
+                                         , xty_js_(handler_.nbClass())
+{
+#ifdef STK_CLOHE_DEBUG
+  stk_cout << _T("FuncSpectra<Size_, Weights_> created\n");
+#endif
+}
+
+/* default constructor */
+template<int Size_, class Weights_>
+FuncSpectra<Size_, Weights_>::FuncSpectra( Handler const& handler
+                                         , String const& kernelName, Real const& h
+                                         , CPointXi const& dim, int degree, String const& posKnots
+                                         , String const& criterion
+                                         )
+                                         : Base(handler.labels(), handler.data())
+                                         , handler_(handler)
+                                         , designer_(handler.times(), kernelName, h, dim, degree, posKnots)
+                                         , dim_(dim)
                                          , type_(Model::stringToTypeCriterion(criterion))
                                          , zi_(handler_.nbSample())
                                          , alpha_(handler_.nbClass())

@@ -69,6 +69,17 @@ class FuncSpectraDesign
     FuncSpectraDesign( Times const& t
                      , String const& kernelName, Real const& h
                      , int dim, int degree, String const& posKnots);
+    /** constructor.
+     * @param t array with the sampling times of all the observations
+     * @param kernelName name of the kernel to use for the covariance matrix
+     * @param h width to use in the kernel
+     * @param dim number of basis to use
+     * @param degree degree of the BSPline to use
+     * @param posKnots way to put the knots
+     **/
+    FuncSpectraDesign( Times const& t
+                     , String const& kernelName, Real const& h
+                     , CPointXi const& dim, int degree, String const& posKnots);
     /** destructor. */
     ~FuncSpectraDesign();
     /** @return a reference on the array of knots */
@@ -100,7 +111,7 @@ class FuncSpectraDesign
     BSplineWCoefficients builder_;
 };
 
-/* */
+/* Default constructor */
 template<int Size_>
 FuncSpectraDesign<Size_>::FuncSpectraDesign( Times const& times
                                            , String const& kernelName, Real const& h
@@ -108,6 +119,52 @@ FuncSpectraDesign<Size_>::FuncSpectraDesign( Times const& times
                                            )
                                            : allKernel_( Range(0,366) )
                                            , builder_(times, dim, degree,  Regress::stringToKnotsPosition(posKnots))
+{
+  // create kernel
+  Kernel::kernelType kind = Kernel::stringToKernelType(kernelName);
+  Kernel::IKernelBase<CPointX>* p_kernel;
+  switch (kind)
+  {
+    case Kernel::gaussian_:
+      p_kernel = new Kernel::Gaussian<CPointX>(h);
+      break;
+    case Kernel::laplace_:
+      p_kernel = new Kernel::Laplace<CPointX>(h);
+      break;
+    case STK::Kernel::rationalQuadratic_:
+      p_kernel = new Kernel::RationalQuadratic<CPointX>(h);
+      break;
+    default:
+      STKRUNTIME_ERROR_1ARG(FuncSpectraDesign,kernelName,invalid kernel name);
+      break;
+  }
+  for (int d= allKernel_.begin(); d < allKernel_.end(); ++d)
+  { allKernel_[d] = p_kernel->value((Real)d);}
+  if (p_kernel) delete p_kernel;
+
+  // create BSpline full basis
+  // sample all the year
+  CPointX allT( 366 );
+  for (int i = allT.begin(); i < allT.end(); ++i) { allT[i] = i;}
+
+  // builder of the design matrix
+  builder_.setData(allT);
+  builder_.run();
+
+#ifdef STK_CLOHE_DEBUG
+  stk_cout << _T("FuncSpectraDesign<Size_>::FuncSpectraDesign constructor terminated\n");
+  stk_cout << " allKernel_ =\n" << allKernel_.transpose();
+  stk_cout << " builder_.coefficients() =\n" << builder_.coefficients();
+#endif
+}
+/* Default constructor */
+template<int Size_>
+FuncSpectraDesign<Size_>::FuncSpectraDesign( Times const& times
+                                           , String const& kernelName, Real const& h
+                                           , CPointXi const& dim, int degree, String const& posKnots
+                                           )
+                                           : allKernel_( Range(0,366) )
+                                           , builder_(times, dim.front(), degree,  Regress::stringToKnotsPosition(posKnots))
 {
   // create kernel
   Kernel::kernelType kind = Kernel::stringToKernelType(kernelName);

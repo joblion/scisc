@@ -24,7 +24,7 @@
 #-----------------------------------------------------------------------
 
 findBestFormosatModel <- function( widths = seq(from = 5, to = 150, by = 5)
-                                 , dims = 6:40
+                                 , dims   = 6:40
                                  , degree = 3
                                  )
 {
