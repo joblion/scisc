@@ -70,6 +70,7 @@ learnFuncSpectra <- function(data, kernelName = "gaussian", width = 50, dim = 5,
   for (i in 1:length(data$labels))
   { nbClass <- max(nbClass, nlevels(factor( (data$labels)[[i]] ))) }
   if (nbClass < 2) { stop("in learnFuncSpectra, not enough class")}
+
   # check degree
   if (!is.numeric(degree))
   { stop("degree must be an integer\n")}
@@ -90,7 +91,8 @@ learnFuncSpectra <- function(data, kernelName = "gaussian", width = 50, dim = 5,
   if (length(data$spectra) == 4)
   {
     resLearn <- .Call( "launchFuncSpectra4"
-                     , data$labels, data$times
+                     , data$labels
+			               , data$times
                      , data$spectra
                      , data$clouds
                      , list(kernelName = kernelName, width = width, dim = dim, posKnots = posKnots, degree = degree, criterion=criterion)
@@ -102,13 +104,14 @@ learnFuncSpectra <- function(data, kernelName = "gaussian", width = 50, dim = 5,
   if (length(data$spectra) == 10)
   {
     resLearn <- .Call( "launchFuncSpectra10"
-      , data$labels, data$times
-      , data$spectra
-      , data$clouds
-      , list(kernelName = kernelName, width = width, dim = dim, posKnots = posKnots, degree = degree, criterion=criterion)
-      , res
-      , PACKAGE = "CloHe"
-    )
+                     , data$labels
+                     , data$times
+                     , data$spectra
+                     , data$clouds
+                     , list(kernelName = kernelName, width = width, dim = dim, posKnots = posKnots, degree = degree, criterion=criterion)
+                     , res
+                     , PACKAGE = "CloHe"
+                     )
   }
   else
   {
@@ -318,8 +321,10 @@ plot.FuncModel <- function(x,...)
   }
   fmin <- rep(1e18,nbSpectrum)
   fmax <- rep(0,nbSpectrum)
+  classLabels <- c()
   for (k in 1:nbClass)
   {
+    classLabels <- c(classLabels, x$models[[k]]@classLabel)
     for (i in 1:nbSpectrum)
     {
       fmi <- min(x$models[[k]]@muk[,i])
@@ -330,14 +335,12 @@ plot.FuncModel <- function(x,...)
   }
   # get old par
   op <- par(no.readonly = TRUE) # the whole list of settable par's.
-  palette(rainbow(nbClass))
+  palette(rainbow(nbClass+3))
 #  palette(heat.colors(nbClass))
 #  palette(colorRampPalette(c("blue", "red"))( nbClass ))
 #  palette(topo.colors( nbClass ))
   # cluster parameters
-  #par(mar = rep(2.5,4), cex = .75, oma = c(1, 0, 3, 0))     # margin and font size
   par(cex = .75, oma = c(4, 1, 1, 1)) # font size and margin. Let a big bottom margin for the legend
-  #split.screen(c(nbRow, nbCol))       # plot first model
   par(mfrow = c(nbRow, nbCol))
   nbTimes <- nrow(x$models[[1]]@muk)
   t <- seq(from = x$tMin, to = x$tMax, length.out = nbTimes)
@@ -346,7 +349,7 @@ plot.FuncModel <- function(x,...)
   {
     #screen(n = i, FALSE)
     plot(x = t, y = x$models[[1]]@muk[,i], type = 'l', col = 1, ylim = c(fmin[i],fmax[i]), ylab = "freq")
-    title(main = paste("Mean Values, spectrum ", i))
+    title(main = paste("Class Means, Spectrum ", i))
     for (k in 2:nbClass)
     {
       lines(x = t, y = x$models[[k]]@muk[,i], type = 'l', col = k, ylab = "freq")
@@ -363,7 +366,7 @@ plot.FuncModel <- function(x,...)
         #, xpd = TRUE
         , horiz = TRUE
         , inset = c(0, 0), bty = "n"
-        , pch = rep(19, nbClass), col = 1:nbClass, legend = as.character(1:nbClass)
+        , pch = rep(19, nbClass), col = 1:nbClass, legend = as.character(classLabels)
         )
   # restore plotting parameters
   par(op)

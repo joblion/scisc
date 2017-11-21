@@ -22,27 +22,32 @@
 #    Contact : S..._Dot_I..._At_stkpp_Dot_org (see copyright for ...)
 #
 #-----------------------------------------------------------------------
-readMultiSentinelSmoothedData <- function(path="./data/")
+readMultiSentinelSmoothedData <- function(path="./data/", size=NULL)
 {
   library(h5)
   f <- h5file(name = paste(path, "gp.hdf5", sep = ""))
   y <- f["y"][]
   x <- f["x"][]
   t <- f["dates"][]
+  nbSample <- length(as.vector(y))
+  if (is.null(size))
+  { samples <- 1:nbSample }
+  else
+  { samples <- sample(1:nbSample, size = size)}
 
-  labels <- list(years1 = as.vector(y))
+  labels <- list(years1 = as.vector(y)[samples])
   times  <- list(years1 = t)
-  spect1 <- list(years1 = as.matrix(x[,1:33]))
-  spect2 <- list(years1 = as.matrix(x[,34:66]))
-  spect3 <- list(years1 = as.matrix(x[,67:99]))
-  spect4 <- list(years1 = as.matrix(x[,100:132]))
-  spect5 <- list(years1 = as.matrix(x[,133:165]))
-  spect6 <- list(years1 = as.matrix(x[,166:198]))
-  spect7 <- list(years1 = as.matrix(x[,199:231]))
-  spect8 <- list(years1 = as.matrix(x[,232:264]))
-  spect9 <- list(years1 = as.matrix(x[,265:297]))
-  spect10 <- list(years1 = as.matrix(x[,298:330]))
-  clouds <- list(years1 = matrix(0, nrow = length(y), ncol = length(t) ))
+  spect1 <- list(years1 = as.matrix(x[samples,1:33]))
+  spect2 <- list(years1 = as.matrix(x[samples,34:66]))
+  spect3 <- list(years1 = as.matrix(x[samples,67:99]))
+  spect4 <- list(years1 = as.matrix(x[samples,100:132]))
+  spect5 <- list(years1 = as.matrix(x[samples,133:165]))
+  spect6 <- list(years1 = as.matrix(x[samples,166:198]))
+  spect7 <- list(years1 = as.matrix(x[samples,199:231]))
+  spect8 <- list(years1 = as.matrix(x[samples,232:264]))
+  spect9 <- list(years1 = as.matrix(x[samples,265:297]))
+  spect10 <- list(years1 = as.matrix(x[samples,298:330]))
+  clouds <- list(years1 = matrix(0, nrow = length(samples), ncol = length(t) ))
 
   # return data in a list
   list( labels  = labels
@@ -63,32 +68,61 @@ readMultiSentinelSmoothedData <- function(path="./data/")
 }
 
 # raws files
-readMultiSentinelRawData <- function(path="./data/")
+readMultiSentinelRawData <- function(path="./data/", size=NULL)
 {
-  # library(h5)
-  # f <- h5file(name = paste(path, "raw.hdf5", sep = ""))
-  # y <- f["y"][]
-  # x <- f["x"][]
-  # t <- f["dates"][]
-  library(rhdf5)
-  t <- h5read(file = paste(path, "raw.hdf5", sep = ""), name = "dates")
-  y <- h5read(file = paste(path, "raw.hdf5", sep = ""), name = "y")
-  x <- h5read(file = paste(path, "raw.hdf5", sep = ""), name = "x")
-  c <- h5read(file = paste(path, "mask.hdf5", sep = ""), name = "mask")
+  library(h5)
 
-  labels <- list(years1 = as.vector(y))
-  times  <- list(years1 = t)
-  spect1 <- list(years1 = t(as.matrix(x[1:30,])))
-  spect2 <- list(years1 = t(as.matrix(x[31:60,])))
-  spect3 <- list(years1 = t(as.matrix(x[61:90,])))
-  spect4 <- list(years1 = t(as.matrix(x[91:120,])))
-  spect5 <- list(years1 = t(as.matrix(x[121:150,])))
-  spect6 <- list(years1 = t(as.matrix(x[151:180,])))
-  spect7 <- list(years1 = t(as.matrix(x[181:210,])))
-  spect8 <- list(years1 = t(as.matrix(x[211:240,])))
-  spect9 <- list(years1 = t(as.matrix(x[241:270,])))
-  spect10 <- list(years1 = t(as.matrix(x[271:300,])))
-  clouds <- list(years1 = t(as.matrix(c)))
+  f <- h5file(name = paste(path, "raw.hdf5", sep = ""))
+  times <- f["dates"][]
+  labels <- f["y"][]
+  spectra <- f["x"][]
+
+  f <- h5file(name = paste(path, "mask.hdf5", sep = ""))
+  clouds <- f["mask"][]
+
+  nbSample <- length(as.vector(labels))
+  if (is.null(size))
+  {
+    size <- nbSample
+    samples <- 1:nbSample
+  }
+  else
+  { samples <- sample(1:nbSample, size = size)}
+
+  times  <- list(years1 = times)
+  labels <- list(years1 = as.vector(labels)[samples])
+  clouds <- list(years1 = (as.matrix(clouds)[samples,]))
+  spectra<- as.matrix(spectra[samples,])
+
+  spect1 <- list(years1 = spectra[,1:30])
+  for (i in 1:size) { for (j in 1:30) { if(spect1$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
+
+  spect2 <- list(years1 = spectra[,31:60])
+  for (i in 1:size) { for (j in 1:30) { if(spect2$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
+
+  spect3 <- list(years1 = spectra[,61:90])
+  for (i in 1:size) { for (j in 1:30) { if(spect3$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
+
+  spect4 <- list(years1 = spectra[,91:120])
+  for (i in 1:size) { for (j in 1:30) { if(spect4$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
+
+  spect5 <- list(years1 = spectra[,121:150])
+  for (i in 1:size) { for (j in 1:30) { if(spect5$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
+
+  spect6 <- list(years1 = spectra[,151:180])
+  for (i in 1:size) { for (j in 1:30) { if(spect6$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
+
+  spect7 <- list(years1 = spectra[,181:210])
+  for (i in 1:size) { for (j in 1:30) { if(spect7$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
+
+  spect8 <- list(years1 = spectra[,211:240])
+  for (i in 1:size) { for (j in 1:30) { if(spect8$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
+
+  spect9 <- list(years1 = spectra[,241:270])
+  for (i in 1:size) { for (j in 1:30) { if(spect9$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
+
+  spect10 <- list(years1 = spectra[,271:300])
+  for (i in 1:size) { for (j in 1:30) { if(spect10$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
 
   # return data in a list
   list( labels  = labels

@@ -29,7 +29,7 @@
  **/
 
 /** @file STK_FuncSpectraDatahandler.cpp
- *  @brief In this file we implement the data handler for the FuncSpectrum model.
+ *  @brief In this file we implement the data handler run method
  **/
 
 #include "../inst/TemporalSpectrumModels/STK_FuncSpectraDataHandler.h"

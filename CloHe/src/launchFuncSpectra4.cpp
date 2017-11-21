@@ -52,7 +52,7 @@ RcppExport SEXP launchFuncSpectra4( SEXP r_labels
                                   , SEXP r_spectra
                                   , SEXP r_clouds
                                   , SEXP r_params
-                                  , SEXP r_res
+                                  , SEXP r_models
                                   )
 {
 BEGIN_RCPP
@@ -68,7 +68,7 @@ BEGIN_RCPP
 
   // convert input to Rcpp format
   Rcpp::List Rlabels  = r_labels;
-  Rcpp::List times    = r_times;
+  Rcpp::List Rtimes   = r_times;
   Rcpp::List Rspectra = r_spectra;
   Rcpp::List Rclouds  = r_clouds;
   Rcpp::List Rparams  = r_params;
@@ -95,9 +95,9 @@ BEGIN_RCPP
 #endif
 
   // create output
-  Rcpp::List res = r_res;
+  Rcpp::List Rmodels = r_models;
   // create handler and launch data sets creation
-  FuncHandler handler(Rlabels, times, Rspectra, Rclouds);
+  FuncHandler handler(Rlabels, Rtimes, Rspectra, Rclouds);
   handler.run();
 
 #ifdef STK_CLOHE_DEBUG
@@ -117,7 +117,7 @@ BEGIN_RCPP
   model.run();
   // get mean value
   YArrays mu;
-  mu.move(model.mean(handler.tmin(), handler.tmax()));
+  mu.move(model.mean(handler.tmin(), handler.tmax(), handler.tmax() - handler.tmin() +1));
 
 #ifdef STK_CLOHE_DEBUG
   stk_cout << "get results\n";
@@ -125,7 +125,7 @@ BEGIN_RCPP
 
   for (int k=0; k < handler.nbClass(); ++k)
   {
-    Rcpp::S4 modelk = res[k];
+    Rcpp::S4 modelk = Rmodels[k];
     modelk.slot("classNumber")     = k;
     modelk.slot("classLabel")      = handler.fact().decoder().find(k)->second;
     modelk.slot("nbSpectrum")      = handler.nbSpectrum();
@@ -158,7 +158,7 @@ BEGIN_RCPP
                            , Rcpp::Named("tMin")         = handler.tmin()
                            , Rcpp::Named("tMax")         = handler.tmax()
                            , Rcpp::Named("params")       = Rparams
-                           , Rcpp::Named("models")       = res
+                           , Rcpp::Named("models")       = Rmodels
                            );
 
 END_RCPP
