@@ -40,20 +40,16 @@
 #include "../inst/TemporalSpectrumModels/STK_FuncSpectra.h"
 #include "../inst/TemporalSpectrumModels/STK_FuncSpectraDataHandler.h"
 
-/** Main function.
- *  @param r_labels vector with the number of the class
- *  @param r_times vector with the a sample times of each pixel
- *  @param r_spectra spectra
- *  @param r_clouds clouds of each pixel at each time
+/** Main function with 4 spectra.
+ *  @param r_data list with the labels, times, spectra and clouds
  *  @param r_params model parameters
- *  @param r_models vector with S4 classes models
+ *  @param r_models list of S4 FuncSpectra class
+ *  @param r_test list with the data test
  **/
-RcppExport SEXP launchFuncSpectra10( SEXP r_labels
-                                   , SEXP r_times
-                                   , SEXP r_spectra
-                                   , SEXP r_clouds
+RcppExport SEXP launchFuncSpectra10( SEXP r_data
                                    , SEXP r_params
                                    , SEXP r_models
+								   , SEXP r_test
                                    )
 {
 BEGIN_RCPP
@@ -65,13 +61,16 @@ BEGIN_RCPP
   typedef STK::FuncSpectra<10, STK::CVectorX> FuncModel;
 
   typedef FuncModel::ArraySeriesSpectra ArraySeriesSpectra;
+  typedef FuncModel::ArraySpectra ArraySpectra;
   typedef FuncModel::YArrays YArrays;
 
   // convert input to Rcpp format
-  Rcpp::List Rlabels  = r_labels;
-  Rcpp::List Rtimes   = r_times;
-  Rcpp::List Rspectra = r_spectra;
-  Rcpp::List Rclouds  = r_clouds;
+  // convert input to Rcpp format
+  Rcpp::List Rdata    = r_data;
+  Rcpp::List Rlabels  = Rdata["labels"];
+  Rcpp::List Rtimes   = Rdata["times"];
+  Rcpp::List Rspectra = Rdata["spectra"];
+  Rcpp::List Rclouds  = Rdata["clouds"];
   Rcpp::List Rparams  = r_params;
 
 #ifdef STK_CLOHE_DEBUG
@@ -95,8 +94,6 @@ BEGIN_RCPP
   stk_cout << _T("criterion =")  << criterion  << _T("\n");
 #endif
 
-  // create output
-  Rcpp::List Rmodels = r_models;
   // create handler and launch data sets creation
   DataHandler handler(Rlabels, Rtimes, Rspectra, Rclouds);
   handler.run();
@@ -121,12 +118,14 @@ BEGIN_RCPP
   // get mean value
 
   YArrays mu;
-  mu.move(model.mean(handler.tmin(), handler.tmax(), handler.tmax() - handler.tmin() +1));
+  mu.move(model.mean(handler.tmin()+1, handler.tmax()-1, handler.tmax() - handler.tmin() -1));
 
 #ifdef STK_CLOHE_DEBUG
   stk_cout << "get results\n";
 #endif
 
+  // create output
+  Rcpp::List Rmodels = r_models;
   for (int k=0; k < handler.nbClass(); ++k)
   {
     Rcpp::S4 modelk = Rmodels[k];
@@ -140,11 +139,34 @@ BEGIN_RCPP
     modelk.slot("pk")              = model.pk()[k];
     modelk.slot("muk")             = STK::wrap(mu[k]);
     modelk.slot("sigma2k")         = STK::wrap(model.sigma2()[k]);
+    modelk.slot("alphak")          = STK::wrap(model.alpha()[k]);
   }
   // get classification and class label
   STK::Labels z(model.zi());
   for (int i=z.begin(); i<z.end(); ++i)
   { z[i] = handler.fact().decoder().find(z[i])->second;}
+  // classify data test
+  STK::Labels ztest, ltest;
+  if (!Rf_isNull(r_test))
+  {
+    Rcpp::List Rtest         = r_test;
+    Rcpp::List Rlabels_test  = Rtest["labels"];
+    Rcpp::List Rtimes_test   = Rtest["times"];
+    Rcpp::List Rspectra_test = Rtest["spectra"];
+    Rcpp::List Rclouds_test  = Rtest["clouds"];
+
+  	DataHandler handlerTest(Rlabels_test, Rtimes_test, Rspectra_test, Rclouds_test);
+  	handlerTest.run();
+  	ztest.resize(handlerTest.nbSample())= 0;
+  	for( int i=ztest.begin(); i<ztest.end(); ++i)
+  	{
+  	  ArraySpectra yt;
+      yt.move(handlerTest.getArraySpectra(i));
+      ztest[i] = model.classify(handlerTest.times()[i], yt);
+      ztest[i] = handler.fact().decoder().find(ztest[i])->second;
+  	}
+  	ltest = handlerTest.classLabels();
+  }
 
   // return results
   return Rcpp::List::create( Rcpp::Named("nbSample")     = handler.nbSample()
@@ -163,6 +185,8 @@ BEGIN_RCPP
                            , Rcpp::Named("tMax")         = handler.tmax()
                            , Rcpp::Named("params")       = Rparams
                            , Rcpp::Named("models")       = Rmodels
+						   , Rcpp::Named("labelstest")   = STK::wrap(ltest)
+						   , Rcpp::Named("zitest")       = STK::wrap(ztest)
                            );
 
 END_RCPP

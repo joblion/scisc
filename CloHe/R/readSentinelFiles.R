@@ -22,10 +22,29 @@
 #    Contact : S..._Dot_I..._At_stkpp_Dot_org (see copyright for ...)
 #
 #-----------------------------------------------------------------------
-readMultiSentinelSmoothedData <- function(path="./data/", size=NULL)
+
+
+#' Read sentinel smoothed data
+#'
+#' This function read the sentinel smoothed data file
+#'
+#' @param path the path containing the files
+#' @param file the name of the file
+#' @param size the number of sample to extract
+#'
+#' @examples
+#' ## the famous sentinel data set
+#' \dontrun{
+#' multiSentinelSmoothed <- readMultiSentinelSmoothedData()
+#' }
+#'
+#' @return A list with the sentinel data
+#' @author Serge Iovleff
+#'
+readMultiSentinelSmoothedData <- function(path="./data/", file = "gp.hdf5", size=NULL)
 {
   library(h5)
-  f <- h5file(name = paste(path, "gp.hdf5", sep = ""))
+  f <- h5file(name = paste(path, file, sep = ""))
   y <- f["y"][]
   x <- f["x"][]
   t <- f["dates"][]
@@ -67,17 +86,34 @@ readMultiSentinelSmoothedData <- function(path="./data/", size=NULL)
       )
 }
 
-# raws files
-readMultiSentinelRawData <- function(path="./data/", size=NULL)
+#' Read sentinel raw data
+#'
+#' This function read the sentinel raw data files
+#'
+#' @param path path containing the files
+#' @param file name of the file with the raw data
+#' @param fileMask name of the file wiht the mask
+#' @param size the number of sample to extract
+#'
+#' @examples
+#' ## the famous sentinel data set
+#' \dontrun{
+#' multiSentinelSmoothed <- readMultiSentinelRawData()
+#' }
+#'
+#' @return A list with the sentinel raw data
+#' @author Serge Iovleff
+#'
+readMultiSentinelRawData <- function(path="./data/", file = "raw.hdf5", fileMask = "mask.hdf5", size=NULL)
 {
   library(h5)
 
-  f <- h5file(name = paste(path, "raw.hdf5", sep = ""))
+  f <- h5file(name = paste(path, file, sep = ""))
   times <- f["dates"][]
   labels <- f["y"][]
   spectra <- f["x"][]
 
-  f <- h5file(name = paste(path, "mask.hdf5", sep = ""))
+  f <- h5file(name = paste(path, fileMask, sep = ""))
   clouds <- f["mask"][]
 
   nbSample <- length(as.vector(labels))
@@ -95,34 +131,53 @@ readMultiSentinelRawData <- function(path="./data/", size=NULL)
   spectra<- as.matrix(spectra[samples,])
 
   spect1 <- list(years1 = spectra[,1:30])
-  for (i in 1:size) { for (j in 1:30) { if(spect1$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
-
+  index <- which( spect1$years1 < 0)
+  clouds$years1[index] <- 1
+#  for (i in 1:size) { for (j in 1:30) { if(spect1$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
   spect2 <- list(years1 = spectra[,31:60])
-  for (i in 1:size) { for (j in 1:30) { if(spect2$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
+  index <- which( spect2$years1 < 0)
+  clouds$years1[index] <- 1
+#  for (i in 1:size) { for (j in 1:30) { if(spect2$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
 
   spect3 <- list(years1 = spectra[,61:90])
-  for (i in 1:size) { for (j in 1:30) { if(spect3$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
+  index <- which( spect3$years1 < 0)
+  clouds$years1[index] <- 1
+#  for (i in 1:size) { for (j in 1:30) { if(spect3$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
 
   spect4 <- list(years1 = spectra[,91:120])
-  for (i in 1:size) { for (j in 1:30) { if(spect4$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
+  index <- which( spect4$years1 < 0)
+  clouds$years1[index] <- 1
+#  for (i in 1:size) { for (j in 1:30) { if(spect4$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
 
   spect5 <- list(years1 = spectra[,121:150])
-  for (i in 1:size) { for (j in 1:30) { if(spect5$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
+  index <- which( spect5$years1 < 0)
+  clouds$years1[index] <- 1
+#  for (i in 1:size) { for (j in 1:30) { if(spect5$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
 
   spect6 <- list(years1 = spectra[,151:180])
-  for (i in 1:size) { for (j in 1:30) { if(spect6$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
+  index <- which( spect6$years1 < 0)
+  clouds$years1[index] <- 1
+#  for (i in 1:size) { for (j in 1:30) { if(spect6$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
 
   spect7 <- list(years1 = spectra[,181:210])
-  for (i in 1:size) { for (j in 1:30) { if(spect7$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
+  index <- which( spect7$years1 < 0)
+  clouds$years1[index] <- 1
+#  for (i in 1:size) { for (j in 1:30) { if(spect7$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
 
   spect8 <- list(years1 = spectra[,211:240])
-  for (i in 1:size) { for (j in 1:30) { if(spect8$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
+  index <- which( spect8$years1 < 0)
+  clouds$years1[index] <- 1
+#  for (i in 1:size) { for (j in 1:30) { if(spect8$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
 
   spect9 <- list(years1 = spectra[,241:270])
-  for (i in 1:size) { for (j in 1:30) { if(spect9$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
+  index <- which( spect9$years1 < 0)
+  clouds$years1[index] <- 1
+#  for (i in 1:size) { for (j in 1:30) { if(spect9$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
 
   spect10 <- list(years1 = spectra[,271:300])
-  for (i in 1:size) { for (j in 1:30) { if(spect10$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
+  index <- which( spect1$years10 < 0)
+  clouds$years1[index] <- 1
+#  for (i in 1:size) { for (j in 1:30) { if(spect10$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
 
   # return data in a list
   list( labels  = labels

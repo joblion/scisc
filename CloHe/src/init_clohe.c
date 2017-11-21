@@ -39,8 +39,8 @@
 // declare functions
 static const R_CallMethodDef callMethods[]  =
 {
-  {"launchFuncSpectra4", (DL_FUNC) &launchFuncSpectra4, 6},
-  {"launchFuncSpectra10", (DL_FUNC) &launchFuncSpectra10, 6},
+  {"launchFuncSpectra4", (DL_FUNC) &launchFuncSpectra4, 4},
+  {"launchFuncSpectra10", (DL_FUNC) &launchFuncSpectra10, 4},
   {"launchGaussian_mut_sigmat", (DL_FUNC) &launchGaussian_mut_sigmat, 8},
   {NULL}
 };

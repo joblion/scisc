@@ -79,11 +79,11 @@ bool FuncSpectraDataHandler<4>::run()
   stk_cout << _T("create Spectra and clouds matrices\n");
 #endif
     // All lists have the same number of records
-    Rcpp::NumericVector Rtimes = *it_times;
+    Rcpp::IntegerVector Rtimes = *it_times;
     // matrices of size number of sample of this year by the number of times
-    Rcpp::NumericMatrix Rx1 = *it1, Rx2 = *it2, Rx3 = *it3, Rx4 = *it4;
+    Rcpp::IntegerMatrix Rx1 = *it1, Rx2 = *it2, Rx3 = *it3, Rx4 = *it4;
     // clouds/shadows/etc...
-    Rcpp::NumericMatrix Rclouds = *it_clouds;
+    Rcpp::IntegerMatrix Rclouds = *it_clouds;
     // loop over the individuals of this passage
     for (int i=0; i< Rclouds.nrow(); ++i, iSample++)
     {
@@ -167,9 +167,9 @@ bool FuncSpectraDataHandler<10>::run()
   stk_cout << _T("Current year. create times vector, Spectra and clouds matrices\n");
 #endif
     // All lists have the same number of records
-    Rcpp::NumericVector Rtimes = *it_times;
+    Rcpp::IntegerVector Rtimes = *it_times;
     // matrices of size number of sample of this year by the number of times
-    Rcpp::NumericMatrix Rx1 = *it1
+    Rcpp::IntegerMatrix Rx1 = *it1
                       , Rx2 = *it2
                       , Rx3 = *it3
                       , Rx4 = *it4
@@ -180,7 +180,7 @@ bool FuncSpectraDataHandler<10>::run()
                       , Rx9 = *it9
                       , Rx10 = *it10 ;
     // clouds/shadows/etc...
-    Rcpp::NumericMatrix Rclouds = *it_clouds;
+    Rcpp::IntegerMatrix Rclouds = *it_clouds;
     // loop over the individuals of this passage
     for (int i=0; i< Rclouds.nrow(); ++i, iSample++)
     {

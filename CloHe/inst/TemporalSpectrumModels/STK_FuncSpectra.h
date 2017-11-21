@@ -73,7 +73,7 @@ class FuncSpectra: public IClassification< Labels
     // Base class
     typedef IClassification< Labels, ArraySeriesSpectra, Weights_> Base;
     // data handler class
-    typedef FuncSpectraDataHandler<Size_> Handler;
+    typedef FuncSpectraDataHandler<Size_> DataHandler;
     enum
     {
       size_ =  hidden::ClassifTraits<Size_ >::size_,
@@ -90,7 +90,7 @@ class FuncSpectra: public IClassification< Labels
      *  @param handler data handler
      *  @param dim number of base functions to use
      **/
-    FuncSpectra( Handler const& handler
+    FuncSpectra( DataHandler const& handler
                , String const& kernelName, Real const& h
                , int dim, int degree, String const& posKnots
                , String const& criterion);
@@ -98,7 +98,7 @@ class FuncSpectra: public IClassification< Labels
      *  @param handler data handler
      *  @param dim number of base functions to use
      **/
-    FuncSpectra( Handler const& handler
+    FuncSpectra( DataHandler const& handler
                , String const& kernelName, Real const& h
                , CPointXi const& dim, int degree, String const& posKnots
                , String const& criterion);
@@ -160,7 +160,7 @@ class FuncSpectra: public IClassification< Labels
 
   protected:
     /** reference on the data handler */
-    Handler const& handler_;
+    DataHandler const& handler_;
     /** utility class allowing to design the matrices xi */
     FuncSpectraDesign<Size_> designer_;
     /** vector of dimensions for each class */
@@ -218,7 +218,7 @@ class FuncSpectra: public IClassification< Labels
 };
 /* default constructor */
 template<int Size_, class Weights_>
-FuncSpectra<Size_, Weights_>::FuncSpectra( Handler const& handler
+FuncSpectra<Size_, Weights_>::FuncSpectra( DataHandler const& handler
                                          , String const& kernelName, Real const& h
                                          , int dim, int degree, String const& posKnots
                                          , String const& criterion
@@ -248,7 +248,7 @@ FuncSpectra<Size_, Weights_>::FuncSpectra( Handler const& handler
 
 /* default constructor */
 template<int Size_, class Weights_>
-FuncSpectra<Size_, Weights_>::FuncSpectra( Handler const& handler
+FuncSpectra<Size_, Weights_>::FuncSpectra( DataHandler const& handler
                                          , String const& kernelName, Real const& h
                                          , CPointXi const& dim, int degree, String const& posKnots
                                          , String const& criterion

@@ -29,7 +29,7 @@ NULL
 #'
 #' This function ajust the parameters of a functionnal gaussian curve model.
 #'
-#' @param data the list containing the data.
+#' @param data list containing the data.
 #' @param kernelName [\code{\link{string}}] with the kernel to use for the covariance matrix.
 #' Availbale kernels are "gaussian", "exponential", "rationalQuadratic". Default is "gaussian".
 #' @param width the width of the kernel to use. Default is 50.
@@ -40,6 +40,7 @@ NULL
 #' @param criterion character defining the criterion to select the best model.
 #' The best model is the one with the lowest criterion value.
 #' Possible values: "BIC", "AIC", "ML". Default is "BIC".
+#' @param test list with test data to classify
 #'
 #' @examples
 #' ## the famous formosat data set
@@ -63,7 +64,11 @@ NULL
 #' @return An instance of the [\code{\linkS4class{FuncModel}}] class.
 #' @author Serge Iovleff
 #'
-learnFuncSpectra <- function(data, kernelName = "gaussian", width = 50, dim = 5, posKnots = "density", degree = 3, criterion = "BIC")
+learnFuncSpectra <- function( data
+                            , kernelName = "gaussian", width = 50
+                            , dim = 5, posKnots = "density", degree = 3
+                            , criterion = "BIC"
+                            , test = NULL)
 {
   # check number of class
   nbClass <- 0
@@ -91,12 +96,10 @@ learnFuncSpectra <- function(data, kernelName = "gaussian", width = 50, dim = 5,
   if (length(data$spectra) == 4)
   {
     resLearn <- .Call( "launchFuncSpectra4"
-                     , data$labels
-			               , data$times
-                     , data$spectra
-                     , data$clouds
+                     , data
                      , list(kernelName = kernelName, width = width, dim = dim, posKnots = posKnots, degree = degree, criterion=criterion)
                      , res
+                     , test
                      , PACKAGE = "CloHe"
                  )
   }
@@ -104,12 +107,10 @@ learnFuncSpectra <- function(data, kernelName = "gaussian", width = 50, dim = 5,
   if (length(data$spectra) == 10)
   {
     resLearn <- .Call( "launchFuncSpectra10"
-                     , data$labels
-                     , data$times
-                     , data$spectra
-                     , data$clouds
+                     , data
                      , list(kernelName = kernelName, width = width, dim = dim, posKnots = posKnots, degree = degree, criterion=criterion)
                      , res
+                     , test
                      , PACKAGE = "CloHe"
                      )
   }
@@ -147,6 +148,7 @@ setClass(
     Class = "FuncSpectraModel",
     representation( muk         = "matrix"
                   , sigma2k     = "vector"
+                  , alphak      = "matrix"
               ),
     contains = c("ICloHeModel"),
     validity = function(object)
@@ -190,6 +192,9 @@ setMethod(
       cat("****************************************\n")
       cat("* sigma2k    =\n")
       print( format(x@sigma2k), quote = FALSE)
+      cat("****************************************\n")
+      cat("* alphak    =\n")
+      print( format(x@alphak), quote = FALSE)
     }
 )
 
@@ -208,12 +213,17 @@ setMethod(
         cat("* muk of spectra =\n")
         print( format(object@muk), quote = FALSE)
       }
-      cat("* ... ...\n")
       cat("****************************************\n")
       if (length(object@sigma2k) != 0)
       {
         cat("* sigma2k of spectra =\n")
         print( format(object@sigma2k), quote = FALSE)
+      }
+      cat("****************************************\n")
+      if (length(object@sigma2k) != 0)
+      {
+        cat("* alphak of spectra =\n")
+        print( format(object@alphak), quote = FALSE)
       }
       cat("****************************************\n")
     }
@@ -336,9 +346,6 @@ plot.FuncModel <- function(x,...)
   # get old par
   op <- par(no.readonly = TRUE) # the whole list of settable par's.
   palette(rainbow(nbClass+3))
-#  palette(heat.colors(nbClass))
-#  palette(colorRampPalette(c("blue", "red"))( nbClass ))
-#  palette(topo.colors( nbClass ))
   # cluster parameters
   par(cex = .75, oma = c(4, 1, 1, 1)) # font size and margin. Let a big bottom margin for the legend
   par(mfrow = c(nbRow, nbCol))
@@ -359,11 +366,7 @@ plot.FuncModel <- function(x,...)
   par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), new = TRUE)
   plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n")
   legend( "bottom"
-        #, fill = 1:6
-        #, ncol = 5
         , cex = 0.8
-        #, lty = 2, lwd = 0.5
-        #, xpd = TRUE
         , horiz = TRUE
         , inset = c(0, 0), bty = "n"
         , pch = rep(19, nbClass), col = 1:nbClass, legend = as.character(classLabels)

@@ -161,7 +161,7 @@ FuncSpectraDataHandler<Size_>::FuncSpectraDataHandler( Rcpp::List const& labels,
   // compute nbSample
   for(Rcpp::List::iterator it = Rlabels_.begin(); it!=Rlabels_.end(); ++it)
   {
-    Rcpp::NumericVector l = *it;
+    Rcpp::IntegerVector l = *it;
     nbSample_ += l.length();
   }
   // get labels
@@ -174,7 +174,7 @@ FuncSpectraDataHandler<Size_>::FuncSpectraDataHandler( Rcpp::List const& labels,
   int iLabel = classLabels_.begin();
   for(Rcpp::List::iterator it = Rlabels_.begin(); it!=Rlabels_.end(); ++it)
   {
-    Rcpp::NumericVector l = *it;
+    Rcpp::IntegerVector l = *it;
     for( int icur=0; icur<l.length(); ++icur)
     { classLabels_[iLabel] = (int)l[icur]; ++iLabel;}
   }
