@@ -207,6 +207,115 @@ matrix(unlist(res$models[[1]]@mut), nrow=4, byrow=F)[,1:2]
 matrix(unlist(res$models[[1]]@sigmat), nrow=4, byrow=F)[,1:(2*4)]
 @
 
+\section{Supervised classification of irregularly sampled spectra}
+
+\subsection{Model}
+
+The object of interest is a spectrum $Y$, it is modeled as a random
+square-integrable function (or process) $I\to \mathbb{R}$ where $I\subset \mathbb{R}$.
+This property is denoted by $Y\in L_2(I)$.
+The number of classes is supposed to be known as is denoted by $K$.
+The label associated with each spectrum $Y$ is modeled by a 
+discrete random variable $Z$ with possible values $\{1,\dots,K\}$.
+Our main assumption is the following:
+\begin{equation}
+\label{eqmod1}
+Y|Z=k \sim GP(\mu_k, C_k), \; k=1,\dots,K
+\end{equation}
+where $GP(\mu_k, C_k)$ is a Gaussian Process with mean $\mu_k\in L_2(I)$
+and with covariance operator $C_k:I\times I\to \mathbb{R}$.
+The assume that $C_k(t,s)=\sigma^{2}_{k} Q((t-s)/h_k)$ for all $(t,s)\in I^2$
+where $h_k>0$ and $\sigma^{2}_{k}>0$ are unknown and where $Q:\mathbb{R}\to\mathbb{R}$
+is fixed.
+We assume to observe independently $n$ spectra $Y_i$, $i=1,\dots,n$ on different
+grids of points $\{t^{i}_1,\dots,t^{i}_{T_i}\}\subset I^{T_i}$. 
+Let us highlight that each grid may
+have its own size $T_i$, $i=1,\dots,n$.
+For the sake of simplicity, the $i$th sampled spectra is denoted by
+$y_i=(Y_i(t_1^{i}),\dots,Y_i(t_{T_i}^{i}))^\top\in \mathbb{R}^{T_i}$
+and the associated label is denoted by $Z_i\in\{1,\dots,K\}$.
+The originality of this classification problem is that we have to deal
+with observations of different dimensions.
+Similarly, let $m_{ik}=(\mu_k(t_1^{i}),\dots,\mu_k(t_{T_i}^{i}))^\top\in \mathbb{R}^{T_i}$
+and introduce the $T_i\times T_i$ matrix $\Sigma^{i}(h_k)$
+whose $(j,j')$th coefficient is defined by 
+$$
+\Sigma^{i}_{j,j'}(h_k)= \sigma^{2}_{k} Q((t^{i}_j-t^{i}_{j'})/h_k) =: \sigma^{2}_{k} S^i_{j,j'}(h_k).
+$$
+Under~(\ref{eqmod1}), it follows that
+\begin{equation}
+\label{eqmod2}
+y_i|Z_i=k \sim \mathcal{N}_{T_i}(m_{ki}, \sigma^{2}_{k} S^i(h_k)), \; k=1,\dots,K, \; i=1,\dots,n
+\end{equation}
+where $\mathcal{N}_{T_i}$ is the multivariate Gaussian distribution on $\mathbb{R}^{T_i}$.
+
+\subsection{Estimation}
+
+Let $\{\varphi_j\}_{j\geq 1}$ be a basis of $L_2(I)$. As a preliminary step, the mean functions
+are supposed to belong to a $J-$dimensional subspace of this basis:
+\begin{equation}
+\label{eqmean}
+ \mu_k(t)=\sum_{j=1}^J \alpha_{kj} \varphi_j(t), \; t\in I.
+\end{equation}
+In the following, the basis is assumed to be fixed, while $J$ is to be estimated.
+Introducing $\alpha_k=(\alpha_{k1},\dots,\alpha_{kJ})^\top \in {\mathbb R}^J$ and $B^{i}$
+the $T_i\times J$ design matrix defined by $B^{i}_{\ell,j}=\varphi_j(t^{i}_\ell)$
+for all $i=1,\dots,n$, $j=1,\dots,J$ and $\ell=1,\dots,T_i$
+yields $m_{ki}=B^{i} \alpha_k$ for all $i=1,\dots,n$ and $k=1,\dots,K$.
+Replacing in~(\ref{eqmod2}), it follows
+\begin{equation}
+\label{eqmod3}
+y_i|Z_i=k \sim \mathcal{N}_{T_i}(B^{i}\alpha_k, \sigma^{2}_{k} S^i(h_k)), \; k=1,\dots,K, \; i=1,\dots,n.
+\end{equation}
+It is then possible to estimate the parameters $\alpha_k$, $\sigma^{2}_{k}$ and $h_k$, $k=1,\dots,K$
+by maximizing the likelihood. Since the labels $Z_i$, $i=1,\dots,n$ are known we end up with
+$K$ independent minimization problems:
+\begin{equation}
+ \label{MV}
+(\hat\alpha_k,\hat{h}_k)=\arg\max_{\alpha_k,h_k,\sigma^{2}_{k}}
+\sum_{i:Z_i=k} \left[\log\det S^i(h_k) +T_i \log\sigma^{2}_{k} + \frac{1}{\sigma^{2}_{k}}(y_i-B^{i}\alpha_k)^\top 
+{S^i(h_k)}^{-1}(y_i-B^{i}\alpha_k)\right].
+\end{equation}
+Each problem~(\ref{MV}) can be solved by alternating the following two steps:
+\begin{itemize}
+ \item Knowing $\hat{h}_k$, compute
+ \begin{eqnarray*}
+ \hat\alpha_k&=& \left[\sum_{Z_i=k} (B^{i})^\top (S^i(\hat{h}_k))^{-1}B^{i}\right]^{-1}
+ \left[\sum_{Z_i=k} (B^{i})^\top {S^i(\hat{h}_k)}^{-1}y_i\right],\\
+ \hat\sigma^{2}_{k}&=& \left[\sum_{Z_i=k} (y_i-B^{i}\alpha_k)^\top {S^i(\hat{h}_k)}^{-1}(y_i-B^{i}\alpha_k)\right] \left/
+ \left[\sum_{Z_i=k} T_i \right]\right. .
+  \end{eqnarray*}
+ \item Plug $\alpha_k=\hat\alpha_k$ and $\sigma^{2}_{k}=\hat\sigma^{2}_{k}$ in~(\ref{MV}) and maximize the function 
+numerically (for instance by a grid search).
+\end{itemize}
+The dimension $J$ can be selected by cross-validation.
+
+\subsection{Visualization}
+
+Once the $\alpha_k$'s are estimated, it can be interesting to display the ``smoothed'' spectra $\hat m_{ki}=B^{i}\hat\alpha_k$.
+The means can also be visualized on a common grid thanks to~(\ref{eqmean}).
+
+\subsection{Classification of a new spectrum}
+
+Let $f_d(\cdot,m,\Sigma)$ be the $d-$ variate Gaussian density with expectation $m$ and covariance matrix $\Sigma$
+and let $\pi_k=P(Z_i=k)$ the prior class membership probabilities. For a new data $y$, let $n(y)$ be the number of
+observation points $t_{1},\dots,t_{n(y)}$, $B(y)$ the associated $n(y)\times J$ design matrix defined by
+$B(y)_{\ell,j}=\varphi_j(t_\ell)$ for all  $j=1,\dots,J$, $\ell=1,\dots,n(y)$, and $\Sigma(y,h_k,\sigma^{2}_{k})$ the 
+covariance
+matrix defined by $\Sigma_{j,j'}(y,h_k,\sigma^{2}_{k})=\sigma^{2}_{k} Q((t_j-t_{j'})/h_k)$ for all 
+$(j,j')\in\{1,\dots,n(y)\}^2$.
+Then, the posterior probabilities
+$P(Z=k|y)$ can be computed by
+the formula
+$$
+P(Z=k|y)= \frac{\pi_k f_{n(y)}(y,B(y)\alpha_k , \Sigma(y,h_k,\sigma^{2}_{k}))}{\sum_{\ell=1}^K \pi_\ell 
+f_{n(y)}(y,B(y)\alpha_\ell, \Sigma(y,h_\ell,\sigma_\ell^2))}.
+$$
+In practice, the $\alpha_k$, $\sigma^{2}_{k}$ and $h_k$ parameters are estimated via the iterative procedure described 
+before
+and $\pi_k$ is estimated by its empirical counterpart $\hat\pi_k=\#\{Z_i=k\}/n$.
+The new spectrum $y$ is then assigned to the class of maximum posterior probability (MAP rule).
+
 \section{Conclusion}
 This first model is easy to implement and seems to work fairly well on the Formosat data set.
 
