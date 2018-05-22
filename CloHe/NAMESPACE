@@ -25,11 +25,12 @@ exportMethods( plot
 import(rtkore)
 
 importFrom("mvtnorm", "dmvnorm")
-importFrom("graphics", "close.screen", "hist", "lines", "par", "screen", "split.screen")
 importFrom("methods", "show", "callNextMethod", "new", "validObject")
 importFrom("stats", "cov.wt")
-importFrom("grDevices", "palette", "rainbow")
-importFrom("graphics", "title")
 importFrom("utils", "read.csv")
-
+importFrom("h5", "h5file")
+importFrom("grDevices", "palette", "rainbow", "colorRampPalette")
+importFrom("graphics", "close.screen", "hist", "lines", "par", "screen", "split.screen")
+importFrom("graphics", "title", "legend")
+  
 useDynLib(CloHe)

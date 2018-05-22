@@ -44,26 +44,19 @@
 extern "C"
 {
 #endif
-SEXP launchFuncSpectra4( SEXP r_labels
-                       , SEXP r_times
-                       , SEXP r_spectra
-                       , SEXP r_clouds
-                       , SEXP r_params
-                       , SEXP r_res
-                       );
-SEXP launchFuncSpectra10( SEXP r_labels
-                        , SEXP r_times
-                        , SEXP r_spectra
-                        , SEXP r_clouds
-                        , SEXP r_params
-                        , SEXP r_res
-                         );
+SEXP launchFuncSpectra4( SEXP r_data, SEXP r_params, SEXP r_model, SEXP r_test);
+SEXP launchFuncSpectra10( SEXP r_data, SEXP r_params, SEXP r_model, SEXP r_test);
 SEXP launchGaussian_mut_sigmat( SEXP r_labels
                               , SEXP r_times
                               , SEXP r_xb, SEXP r_xg, SEXP r_xr, SEXP r_xi
                               , SEXP r_clouds
                               , SEXP r_res
                               );
+
+SEXP checkKernelNames( SEXP name);
+SEXP checkBasisNames( SEXP name);
+SEXP checkKnotsPositionNames( SEXP name);
+
 #ifdef __cplusplus
 extern "C"
 }

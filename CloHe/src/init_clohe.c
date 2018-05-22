@@ -42,6 +42,9 @@ static const R_CallMethodDef callMethods[]  =
   {"launchFuncSpectra4", (DL_FUNC) &launchFuncSpectra4, 4},
   {"launchFuncSpectra10", (DL_FUNC) &launchFuncSpectra10, 4},
   {"launchGaussian_mut_sigmat", (DL_FUNC) &launchGaussian_mut_sigmat, 8},
+  {"checkKernelNames", (DL_FUNC) &checkKernelNames, 1},
+  {"checkBasisNames", (DL_FUNC) &checkBasisNames, 1},
+  {"checkKnotsPositionNames", (DL_FUNC) &checkKnotsPositionNames, 1},
   {NULL}
 };
 

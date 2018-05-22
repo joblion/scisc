@@ -32,8 +32,8 @@
  *  @brief In this file we define the BSplineWCoefficients class.
  **/
 
-#ifndef BSPLINEWCOEFFICIENTS_H
-#define BSPLINEWCOEFFICIENTS_H
+#ifndef STK_BSPLINEWCOEFFICIENTS_H
+#define STK_BSPLINEWCOEFFICIENTS_H
 
 #include "STK_CloHe_Util.h"
 #include <Regress/include/STK_BSplineCoefficients.h>
@@ -51,14 +51,16 @@ class BSplineWCoefficients: public BSplineCoefficients<CPointX>
     /** @brief Default constructor : initialize the data members with default
      *  values.
      *  The number of knots is given by the formula
-     *  nbKnots = nbControlPoints + degree +1.
-     *  @param times the input times values
-     *  @param nbControlPoints number of control points
+     *  nbKnots = dim + degree +1.
+     *  @param times input times values
+     *  @param labels labels values
+     *  @param dim number of control points
      *  @param degree degree of the B-spline curves
      *  @param position method to use for positioning the knots
      **/
     BSplineWCoefficients( Times const& times
-                        , int nbControlPoints =1
+                        , Labels const& labels
+                        , int dim =10
                         , int degree = 3
                         , Regress::KnotsPosition position = Regress::uniformKnotsPositions_
                         );
@@ -70,22 +72,32 @@ class BSplineWCoefficients: public BSplineCoefficients<CPointX>
     inline virtual ~BSplineWCoefficients() {}
     /** clone pattern implementation */
     inline BSplineWCoefficients* clone() const { return new BSplineWCoefficients(*this);}
+
+    /** @return the minimal date */
+    inline Real tmin() const { return tmin_;}
+    /** @return the maximal date */
+    inline Real tmax() const { return tmax_;}
+
     /** run the computations. */
     virtual bool run();
-    /** run weighted computations */
-    template<class Weights_>
-    bool run(Weights_ const& w);
+
+    /** set class to handle */
+    void setClass(int classNumber) { classNumber_ = classNumber;}
 
   protected:
     /** constant reference on the sampled days */
     Times const& times_;
+    /** constant reference on the labels */
+    Labels const& labels_;
     /** first time */
     Real tmin_;
     /** last time */
     Real tmax_;
+    /** class to handle */
+    int classNumber_;
 
   private:
-    /** */
+    /** array of all possibles times */
     CPointX allTimes_;
     /** Compute the coefficients of the B-spline curves.*/
     bool computeWeightedKnots();
@@ -93,4 +105,4 @@ class BSplineWCoefficients: public BSplineCoefficients<CPointX>
 
 } // namespace STK
 
-#endif /* BSPLINEWCOEFFICIENTS_H */
+#endif /* STK_BSPLINEWCOEFFICIENTS_H */

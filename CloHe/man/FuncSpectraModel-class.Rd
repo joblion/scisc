@@ -13,9 +13,9 @@ from [\code{\linkS4class{ICloHeModel}}].
 \section{Slots}{
 
 \describe{
-\item{\code{muk}}{matrix with the sampled (100 times) mean spectrum.}
+\item{\code{mu}}{matrix with the sampled (100 times) mean spectrum.}
 
-\item{\code{sigma2k}}{vector with the variance of each spectrum}
+\item{\code{sigma2}}{vector with the variance of each spectrum}
 }}
 
 \examples{

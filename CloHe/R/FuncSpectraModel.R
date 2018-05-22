@@ -30,13 +30,19 @@ NULL
 #' This function ajust the parameters of a functionnal gaussian curve model.
 #'
 #' @param data list containing the data.
-#' @param kernelName [\code{\link{string}}] with the kernel to use for the covariance matrix.
-#' Availbale kernels are "gaussian", "exponential", "rationalQuadratic". Default is "gaussian".
+#' @param kernelName [\code{string}] with the kernel to use for the covariance matrix.
+#' Available kernels are "gaussian", "exponential", "rationalQuadratic".
+#' Default is "gaussian".
 #' @param width the width of the kernel to use. Default is 50.
 #' @param dim  [\code{\link{integer}}] number of base to use. Default is 5.
-#' @param posKnots position for the knots of the B-spline. Available position are "periodic", "density",
-#' "uniform". Default is "density".
-#' @param degree degree of the B-splines. Default is 3.
+#' @param basisName [\code{string}] with the name of the basis to use. Available
+#' basis are "sines", "cosines", "trigonometric", "chebyshev", "bspline". Default
+#' is "bspline".
+#' @param posKnots position for the knots of the B-spline. Available positions
+#' are "periodic", "density", "uniform". Default is "density". Only used if
+#' \code{basisName} is "bspline".
+#' @param degree degree of the B-splines. Default is 3. Only used if
+#' \code{basisName} is "bspline".
 #' @param criterion character defining the criterion to select the best model.
 #' The best model is the one with the lowest criterion value.
 #' Possible values: "BIC", "AIC", "ML". Default is "BIC".
@@ -66,8 +72,9 @@ NULL
 #'
 learnFuncSpectra <- function( data
                             , kernelName = "gaussian", width = 50
-                            , dim = 5, posKnots = "density", degree = 3
-                            , criterion = "BIC"
+                            , dim = 5
+                            , basisName = "Bspline", posKnots = "density", degree = 3
+                            , criterion = "BIC", maxValue = NULL
                             , test = NULL)
 {
   # check number of class
@@ -76,20 +83,40 @@ learnFuncSpectra <- function( data
   { nbClass <- max(nbClass, nlevels(factor( (data$labels)[[i]] ))) }
   if (nbClass < 2) { stop("in learnFuncSpectra, not enough class")}
 
-  # check degree
-  if (!is.numeric(degree))
-  { stop("degree must be an integer\n")}
+  # check maxValue
+  if (!is.null(maxValue))
+  {
+    if (!is.double(maxValue) || maxValue<= 0)
+    stop("maxValue must be a positive real number\n")
+  }
 
   # check criterion
   if (sum(criterion %in% c("BIC","AIC", "ML")) !=  1)
   { stop("criterion is not valid. See ?learnFuncSpectra for the list of valid criterion\n")}
 
   # check kernel name
-  if (sum(kernelName %in% c("gaussian", "laplace", "rationalQuadratic")) != 1)
-  { stop("in learnFuncSpectra, kernelName is incorrect")}
-  # check knots position
-  if (sum(posKnots %in% c("periodic", "uniform", "density")) != 1)
-  { stop("in learnFuncSpectra, posKnots is incorrect")}
+  flag = .Call("checkKernelNames", kernelName, PACKAGE = "CloHe")
+  if (!flag) { stop("in learnFuncSpectra, kernelName is incorrect")}
+
+  # check basis name
+  flag = .Call("checkBasisNames", basisName, PACKAGE = "CloHe")
+  if (!flag) { stop("in learnFuncSpectra, basisName  is incorrect")}
+
+  # additional tests for BSPLINE basis
+  if (toupper(basisName) == "BSPLINE")
+  {
+    # check knots position
+    flag = .Call("checkKnotsPositionNames", posKnots, PACKAGE = "CloHe")
+    if (!flag) { stop("in learnFuncSpectra, posKnots is incorrect")}
+    # check degree
+    if (!is.numeric(degree)) { stop("degree must be an integer\n")}
+  }
+  else
+  { # set arbitrary values
+    degree = 0
+    posKnots = "unknown"
+  }
+
   # create vector of results
   res <- lapply( rep("FuncSpectraModel", nbClass), new)
   # launch computations
@@ -97,7 +124,11 @@ learnFuncSpectra <- function( data
   {
     resLearn <- .Call( "launchFuncSpectra4"
                      , data
-                     , list(kernelName = kernelName, width = width, dim = dim, posKnots = posKnots, degree = degree, criterion=criterion)
+                     , list( kernelName = kernelName, width = width
+                           , basisName = basisName, dim = dim, posKnots = posKnots
+                           , degree = degree
+                           , criterion=criterion
+                           , maxValue = maxValue)
                      , res
                      , test
                      , PACKAGE = "CloHe"
@@ -108,7 +139,11 @@ learnFuncSpectra <- function( data
   {
     resLearn <- .Call( "launchFuncSpectra10"
                      , data
-                     , list(kernelName = kernelName, width = width, dim = dim, posKnots = posKnots, degree = degree, criterion=criterion)
+                     , list( kernelName = kernelName, width = width
+                           , basisName = basisName, dim = dim, posKnots = posKnots
+                           , degree = degree
+                           , criterion=criterion
+                           , maxValue = maxValue)
                      , res
                      , test
                      , PACKAGE = "CloHe"
@@ -130,8 +165,8 @@ learnFuncSpectra <- function( data
 #' and variance varying along the time. It inherits
 #' from [\code{\linkS4class{ICloHeModel}}].
 #'
-#' @slot muk matrix with the sampled (100 times) mean spectrum.
-#' @slot sigma2k vector with the variance of each spectrum
+#' @slot mu matrix with the sampled (100 times) mean spectrum.
+#' @slot sigma2 vector with the variance of each spectrum
 #'
 #' @seealso [\code{\linkS4class{ICloHeModel}}] class
 #'
@@ -146,9 +181,14 @@ learnFuncSpectra <- function( data
 #'
 setClass(
     Class = "FuncSpectraModel",
-    representation( muk         = "matrix"
-                  , sigma2k     = "vector"
-                  , alphak      = "matrix"
+    representation( mu           = "matrix"
+                  , sigma2       = "vector"
+                  , alpha        = "matrix"
+                  , eigenvalues  = "vector"
+                  , knots        = "vector"
+                  , coefficients = "vector"
+                  , tmin         = "numeric"
+                  , tmax         = "numeric"
               ),
     contains = c("ICloHeModel"),
     validity = function(object)
@@ -187,14 +227,14 @@ setMethod(
       cat("****************************************\n")
       callNextMethod();
       cat("****************************************\n")
-      cat("* muk        =\n")
-      print( format(x@muk), quote = FALSE)
+      cat("* mu        =\n")
+      print( format(x@mu), quote = FALSE)
       cat("****************************************\n")
-      cat("* sigma2k    =\n")
-      print( format(x@sigma2k), quote = FALSE)
+      cat("* sigma2    =\n")
+      print( format(x@sigma2), quote = FALSE)
       cat("****************************************\n")
-      cat("* alphak    =\n")
-      print( format(x@alphak), quote = FALSE)
+      cat("* alpha    =\n")
+      print( format(x@alpha), quote = FALSE)
     }
 )
 
@@ -208,22 +248,22 @@ setMethod(
       cat("****************************************\n")
       callNextMethod();
       cat("****************************************\n")
-      if (length(object@muk) != 0)
+      if (length(object@mu) != 0)
       {
-        cat("* muk of spectra =\n")
-        print( format(object@muk), quote = FALSE)
+        cat("* mu of spectra =\n")
+        print( format(object@mu), quote = FALSE)
       }
       cat("****************************************\n")
-      if (length(object@sigma2k) != 0)
+      if (length(object@sigma2) != 0)
       {
-        cat("* sigma2k of spectra =\n")
-        print( format(object@sigma2k), quote = FALSE)
+        cat("* sigma2 of spectra =\n")
+        print( format(object@sigma2), quote = FALSE)
       }
       cat("****************************************\n")
-      if (length(object@sigma2k) != 0)
+      if (length(object@sigma2) != 0)
       {
-        cat("* alphak of spectra =\n")
-        print( format(object@alphak), quote = FALSE)
+        cat("* alpha of spectra =\n")
+        print( format(object@alpha), quote = FALSE)
       }
       cat("****************************************\n")
     }
@@ -270,7 +310,7 @@ setMethod(
     function(x,y,...)
     {
       nbSpectrum <- x@nbSpectrum
-      nbSampling <- nrow(x@muk)
+      nbSampling <- nrow(x@mu)
       t <- seq(from = 1, to = 366, length.out = nbSampling)
       nbrow = 1
       nbcol = nbSpectrum
@@ -284,11 +324,18 @@ setMethod(
         nbrow = 3
         nbcol = nbSpectrum %/% 3
       }
+      # get old par
+      op <- par(no.readonly = TRUE) # the whole list of settable par's.
+      op.palette <- colorRampPalette(c('dark blue', 'green', 'dark red'), space = "Lab")
+      palette( op.palette(nbSpectrum) )
       par(mfrow = c(nbrow, nbcol))
       for (i in 1:nbSpectrum)
       {
-        plot(x = t, y = x@muk[,i], type = 'l', col = i + 2, ylab = "freq")
+        plot(x = t, y = x@mu[,i], type = 'l', col = i, ylab = "Values", xlab = "dates")
       }
+      # restore plotting parameters
+      par(op)
+      palette("default")
     }
 )
 
@@ -329,6 +376,8 @@ plot.FuncModel <- function(x,...)
     nbRow = 1
     nbCol = nbSpectrum
   }
+  # get old par
+  op <- par(no.readonly = TRUE) # the whole list of settable par's.
   fmin <- rep(1e18,nbSpectrum)
   fmax <- rep(0,nbSpectrum)
   classLabels <- c()
@@ -337,29 +386,33 @@ plot.FuncModel <- function(x,...)
     classLabels <- c(classLabels, x$models[[k]]@classLabel)
     for (i in 1:nbSpectrum)
     {
-      fmi <- min(x$models[[k]]@muk[,i])
-      fma <- max(x$models[[k]]@muk[,i])
+      fmi <- min(x$models[[k]]@mu[,i])
+      fma <- max(x$models[[k]]@mu[,i])
       fmin[i] <- min(fmin[i], fmi)
       fmax[i] <- max(fmax[i], fma)
     }
   }
-  # get old par
-  op <- par(no.readonly = TRUE) # the whole list of settable par's.
   palette(rainbow(nbClass+3))
   # cluster parameters
   par(cex = .75, oma = c(4, 1, 1, 1)) # font size and margin. Let a big bottom margin for the legend
   par(mfrow = c(nbRow, nbCol))
-  nbTimes <- nrow(x$models[[1]]@muk)
-  t <- seq(from = x$tMin, to = x$tMax, length.out = nbTimes)
-
+  # one plot per spectrum
   for (i in 1:nbSpectrum)
   {
-    #screen(n = i, FALSE)
-    plot(x = t, y = x$models[[1]]@muk[,i], type = 'l', col = 1, ylim = c(fmin[i],fmax[i]), ylab = "freq")
+    # plot spectrum i, class 1
+    nbTimes <- nrow(x$models[[1]]@mu)
+    t <- seq(from = x$tMin, to = x$tMax, length.out = nbTimes)
+    plot( x = t, y = x$models[[1]]@mu[,i], type = 'l', col = 1
+        , xlim = c(x$tMin, x$tMax), ylim = c(fmin[i],fmax[i])
+        , ylab = "Values", xlab = "dates")
     title(main = paste("Class Means, Spectrum ", i))
+    # plot spectrum i, other class
     for (k in 2:nbClass)
     {
-      lines(x = t, y = x$models[[k]]@muk[,i], type = 'l', col = k, ylab = "freq")
+      nbTimes <- nrow(x$models[[k]]@mu)
+      t <- seq(from = x$models[[k]]@tmin, to = x$models[[k]]@tmax, length.out = nbTimes)
+      lines( x = t, y = x$models[[k]]@mu[,i], type = 'l', col = k
+           , ylab = "Values", xlab = "dates")
     }
   }
   #close.screen(all.screens = TRUE)

@@ -46,12 +46,12 @@ namespace STK
 class Gaussian_mut_Sigmat: public IStatModelBase, public IRunnerBase
 {
   public:
-    //typedef IClassification<ArraySpectra4, CVectorXi, CVectorX> Base;
+    //typedef IClassification<ArraySp4, CVectorXi, CVectorX> Base;
     /** Default constructor
      *  @param data a matrix with for each individuals the spectrum
      *  @param clouds a matrix with the clouds, shadows,...
      * */
-    Gaussian_mut_Sigmat( ArraySpectra4 const& data, CArrayXX const& clouds);
+    Gaussian_mut_Sigmat( ArraySp4 const& data, CArrayXX const& clouds);
     /** destructor */
     virtual ~Gaussian_mut_Sigmat();
 
@@ -60,7 +60,7 @@ class Gaussian_mut_Sigmat: public IStatModelBase, public IRunnerBase
     /** @return covarainces at each times */
     inline PointCov4 const& sigmat() const { return sigmat_;}
     /** @return residuals at each times */
-    inline ArraySpectra4 const& residuals() const { return residualsit_;}
+    inline ArraySp4 const& residuals() const { return residualsit_;}
 
     /** compute the means and the variances */
     virtual bool run();
@@ -77,9 +77,9 @@ class Gaussian_mut_Sigmat: public IStatModelBase, public IRunnerBase
 
   protected:
     /** Array with the spectrums */
-    ArraySpectra4 datait_;
+    ArraySp4 datait_;
     /** Array with the the residuals of the spectrums */
-    ArraySpectra4 residualsit_;
+    ArraySp4 residualsit_;
     /** Array with the clouds, shadows,... */
     CArrayXXd cloudsit_;
     /** means of the spectrum at each instants */

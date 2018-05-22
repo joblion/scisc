@@ -221,7 +221,7 @@ bool FuncSpectraRegression<Size_,Weights_>::finalizeStep()
   sigma2_= Stat::varianceByCol(residuals_, false);
   this->setNbFreeParameter(sigma2_.size() + coefs_.sizeArray());
   this->setLnLikelihood( nbSample() * sigma2_.log().sum()  // \sum T_i \log(\sigma^2_k)
-                       + (residuals_*sigma2_.asDiagonal().inverse()).norm2());
+                       + (residuals_*sigma2_.diagonalize().inverse()).norm2());
   return true;
 }
 

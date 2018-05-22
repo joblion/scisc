@@ -36,9 +36,7 @@
 #include <omp.h>
 #endif
 
-#include "../inst/TemporalSpectrumModels/STK_CloHe_Util.h"
 #include "../inst/TemporalSpectrumModels/STK_FuncSpectra.h"
-#include "../inst/TemporalSpectrumModels/STK_FuncSpectraDataHandler.h"
 
 /** Main function with 4 spectra.
  *  @param r_data list with the labels, times, spectra and clouds
@@ -46,11 +44,7 @@
  *  @param r_models list of S4 FuncSpectra class
  *  @param r_test list with the data test
  **/
-RcppExport SEXP launchFuncSpectra4( SEXP r_data
-                                  , SEXP r_params
-                                  , SEXP r_models
-								  , SEXP r_test
-                                  )
+RcppExport SEXP launchFuncSpectra4( SEXP r_data, SEXP r_params, SEXP r_models, SEXP r_test)
 {
 BEGIN_RCPP
 #ifdef STK_CLOHE_DEBUG
@@ -58,10 +52,11 @@ BEGIN_RCPP
 #endif
   // typedefs
   typedef STK::FuncSpectraDataHandler<4> DataHandler;
+  typedef STK::FuncSpectraDesigner<4> Designer;
   typedef STK::FuncSpectra<4, STK::CVectorX> FuncModel;
 
   typedef FuncModel::ArraySeriesSpectra ArraySeriesSpectra;
-  typedef FuncModel::ArraySpectra ArraySpectra;
+  typedef FuncModel::ArraySp ArraySp;
   typedef FuncModel::YArrays YArrays;
 
   // convert input to Rcpp format
@@ -72,14 +67,33 @@ BEGIN_RCPP
   Rcpp::List Rclouds  = Rdata["clouds"];
   Rcpp::List Rparams  = r_params;
 
+  double maxValue = STK::Arithmetic<double>::max();
+  if (!Rf_isNull(Rparams["maxValue"])) { maxValue = Rcpp::as<double>(Rparams["maxValue"]);};
+
 #ifdef STK_CLOHE_DEBUG
+  stk_cout << _T("Creating and launching DataHandler\n");
+#endif
+  // create handler and launch data sets creation
+  DataHandler handler(Rlabels, Rtimes, Rspectra, Rclouds);
+  handler.setMaxValue(maxValue);
+  handler.run();
+
+#ifdef STK_CLOHE_DEBUG
+  stk_cout << _T("handler.nbSample()=")      << handler.nbSample() <<_T("\n");
+  stk_cout << _T("handler.nbClass()=")       << handler.nbClass() <<_T("\n");
+  stk_cout << _T("handler.nbSpectrum()=")    << handler.nbSpectrum() <<_T("\n");
+  stk_cout << _T("handler.nk()=")            << handler.nk();
+  stk_cout << _T("handler.tmin()=")          << handler.tmin() << _T("\n");
+  stk_cout << _T("handler.tmax()=")          << handler.tmax() << _T("\n");
   stk_cout << _T("In launchFuncSpectrum. Read parameters\n");
 #endif
-
   // get parameter values
   std::string kernelName = Rcpp::as<std::string>(Rparams["kernelName"]);
   double width           = Rcpp::as<double>(Rparams["width"]);
   int dim                = Rcpp::as<int>(Rparams["dim"]);
+  STK::CPointXi dims(handler.nbClass(), dim);
+
+  std::string basisName  = Rcpp::as<std::string>(Rparams["basisName"]);
   std::string posKnots   = Rcpp::as<std::string>(Rparams["posKnots"]);
   int degree             = Rcpp::as<int>(Rparams["degree"]);
   std::string criterion  = Rcpp::as<std::string>(Rparams["criterion"]);
@@ -91,31 +105,22 @@ BEGIN_RCPP
   stk_cout << _T("posKnots =")   << posKnots   << _T("\n");
   stk_cout << _T("degree =")     << degree     << _T("\n");
   stk_cout << _T("criterion =")  << criterion  << _T("\n");
-#endif
-
-  // create handler and launch data sets creation
-  DataHandler handler(Rlabels, Rtimes, Rspectra, Rclouds);
-  handler.run();
-
-#ifdef STK_CLOHE_DEBUG
-  stk_cout << _T("handler.nbSample()=")      << handler.nbSample() <<_T("\n");
-  stk_cout << _T("handler.nbClass()=")       << handler.nbClass() <<_T("\n");
-  stk_cout << _T("handler.nbSpectrum()=")    << handler.nbSpectrum() <<_T("\n");
-  stk_cout << _T("handler.nk()=")            << handler.nk();
-  stk_cout << _T("handler.tmin()=")          << handler.tmin() << _T("\n");
-  stk_cout << _T("handler.tmax()=")          << handler.tmax() << _T("\n");
   stk_cout << _T("\ncreate and launch FuncModel\n");
 #endif
+
+  /* utility class allowing to design the matrices xi */
+  Designer designer(handler.times(), handler.labels(), kernelName, width, basisName, dims, degree, posKnots);
 
 #ifdef _OPENMP
 //  omp_set_num_threads(omp_get_num_procs());
   omp_set_num_threads(2);
 #endif
-  FuncModel model(handler, kernelName, width, dim, degree, posKnots, criterion);
+  FuncModel model(handler, designer, criterion);
   model.run();
-  // get mean value
+
+  // get mean values
   YArrays mu;
-  mu.move(model.mean(handler.tmin()+1, handler.tmax()-1, handler.tmax() - handler.tmin() -1));
+  mu.move(model.mean( handler.tmax() - handler.tmin() -1));
 
 #ifdef STK_CLOHE_DEBUG
   stk_cout << "get results\n";
@@ -134,9 +139,14 @@ BEGIN_RCPP
     modelk.slot("nbFreeParameter") = model.nbFreeParameters()[k];
     modelk.slot("nk")              = model.nk()[k];
     modelk.slot("pk")              = model.pk()[k];
-    modelk.slot("muk")             = STK::wrap(mu[k]);
-    modelk.slot("sigma2k")         = STK::wrap(model.sigma2()[k]);
-    modelk.slot("alphak")          = STK::wrap(model.alpha()[k]);
+    modelk.slot("mu")              = STK::wrap(mu[k]);
+    modelk.slot("sigma2")          = STK::wrap(model.sigma2()[k]);
+    modelk.slot("alpha")           = STK::wrap(model.alpha()[k]);
+    modelk.slot("eigenvalues")     = STK::wrap(model.eigenvalues()[k]);
+    modelk.slot("knots")           = STK::wrap(model.knots()[k]);
+    modelk.slot("coefficients")    = STK::wrap(model.coefficients()[k]);
+    modelk.slot("tmin")            = model.tmin()[k];
+    modelk.slot("tmax")            = model.tmax()[k];
   }
   // get classification and class label
   STK::Labels z(model.zi());
@@ -153,12 +163,16 @@ BEGIN_RCPP
     Rcpp::List Rclouds_test  = Rtest["clouds"];
 
   	DataHandler handlerTest(Rlabels_test, Rtimes_test, Rspectra_test, Rclouds_test);
+    handlerTest.setMaxValue(maxValue);
   	handlerTest.run();
   	ztest.resize(handlerTest.nbSample())= 0;
+#ifdef STK_CLOHE_DEBUG
+  stk_cout << "Launch classification for test data\n";
+#endif
   	for( int i=ztest.begin(); i<ztest.end(); ++i)
   	{
-  	  ArraySpectra yt;
-      yt.move(handlerTest.getArraySpectra(i));
+  	  ArraySp yt;
+      yt.move(handlerTest.getArraySp(i));
       ztest[i] = model.classify(handlerTest.times()[i], yt);
       ztest[i] = handler.fact().decoder().find(ztest[i])->second;
   	}
@@ -175,14 +189,12 @@ BEGIN_RCPP
                            , Rcpp::Named("pk")           = STK::wrap(model.pk())
                            , Rcpp::Named("lnLikelihood") = STK::wrap(model.lnLikelihood())
                            , Rcpp::Named("criterion")    = STK::wrap(model.criterion())
-                           , Rcpp::Named("knots")        = STK::wrap(model.knots())
-                           , Rcpp::Named("coefficients") = STK::wrap(model.coefficients())
                            , Rcpp::Named("tMin")         = handler.tmin()
                            , Rcpp::Named("tMax")         = handler.tmax()
                            , Rcpp::Named("params")       = Rparams
                            , Rcpp::Named("models")       = Rmodels
-						   , Rcpp::Named("labelstest")   = STK::wrap(ltest)
-						   , Rcpp::Named("zitest")       = STK::wrap(ztest)
+                           , Rcpp::Named("labelstest")   = STK::wrap(ltest)
+                           , Rcpp::Named("zitest")       = STK::wrap(ztest)
                            );
 
 END_RCPP

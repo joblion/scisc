@@ -40,11 +40,11 @@
 #endif
 
 
-#include <Classification/include/STK_IClassification.h>
 #include "STK_CloHe_Util.h"
+#include <Classification/include/STK_IClassification.h>
 #include "STK_FuncSpectraRegression.h"
 #include "STK_FuncSpectraDataHandler.h"
-#include "STK_FuncSpectraDesign.h"
+#include "STK_FuncSpectraDesigner.h"
 
 namespace STK
 {
@@ -64,7 +64,7 @@ class FuncSpectra: public IClassification< Labels
     typedef typename hidden::ClassifTraits<Size_ >::Spectra Spectra;
 
     // array of spectra (CArray<Real, UnknownSize, Size_>)
-    typedef typename hidden::ClassifTraits<Size_ >::ArraySpectra ArraySpectra;
+    typedef typename hidden::ClassifTraits<Size_ >::ArraySp ArraySp;
     // array of values during time for a given pixel (CArrayPoint<Spectra>)
     typedef typename hidden::ClassifTraits<Size_ >::SeriesSpectra SeriesSpectra;
     // 3D array of all values (Array1D< CArrayPoint<Spectra>  >)
@@ -74,13 +74,15 @@ class FuncSpectra: public IClassification< Labels
     typedef IClassification< Labels, ArraySeriesSpectra, Weights_> Base;
     // data handler class
     typedef FuncSpectraDataHandler<Size_> DataHandler;
+    // Designer class
+    typedef FuncSpectraDesigner<Size_> Designer;
     enum
     {
       size_ =  hidden::ClassifTraits<Size_ >::size_,
     };
 
     /** typedef for the y values. Array (of array) of size K */
-    typedef Array1D< ArraySpectra >  YArrays;
+    typedef Array1D< ArraySp >  YArrays;
     /** typedef for the parameters values. */
     typedef Array1D< Spectra >   PArrays;
 
@@ -90,21 +92,11 @@ class FuncSpectra: public IClassification< Labels
      *  @param handler data handler
      *  @param dim number of base functions to use
      **/
-    FuncSpectra( DataHandler const& handler
-               , String const& kernelName, Real const& h
-               , int dim, int degree, String const& posKnots
-               , String const& criterion);
-    /** Default constructor
-     *  @param handler data handler
-     *  @param dim number of base functions to use
-     **/
-    FuncSpectra( DataHandler const& handler
-               , String const& kernelName, Real const& h
-               , CPointXi const& dim, int degree, String const& posKnots
-               , String const& criterion);
+    FuncSpectra( DataHandler const& handler, Designer const& design, String const& criterion);
     /** destructor */
-    virtual ~FuncSpectra() {}
-    // data handler
+    inline virtual ~FuncSpectra() {}
+
+    // data handler getters
     /** @return the number of sample */
     inline int nbSample() const { return handler_.nbSample();}
     /** @return the number of spectrum */
@@ -116,55 +108,60 @@ class FuncSpectra: public IClassification< Labels
     /** number of available sampling for each sample */
     inline CPointXi const& ni() const { return handler_.ni();}
     /** @return labels of all pixels */
-    Labels const& labels() const { return handler_.labels();}
+    inline Labels const& labels() const { return handler_.labels();}
     /** @return labels of pixel i*/
     inline int labels(int i) const { return handler_.labels()[i];}
     /** @return sampling times for all pixels */
-    Times const& times() const { return handler_.times();}
+    inline Times const& times() const { return handler_.times();}
     /** @return sampling times of pixel i */
-    CPointX const& times(int i) const { return handler_.times()[i];}
+    inline CPointX const& times(int i) const { return handler_.times()[i];}
     /** spectrum of the pixel i at time t */
-    Spectra const& data(int i, int t) const { return handler_.data()[i][t];}
-    // designer
-    /** @return a reference on the array of knots */
-    VectorX const& knots() const { return designer_.knots();}
-	/** @return a reference on the array of coefficients */
-    ArrayXX const& coefficients() const { return designer_.coefficients();}
+    inline Spectra const& data(int i, int t) const { return handler_.data()[i][t];}
+
+    // designer getters
+    /** array with the knots of each class */
+    inline Array1D< VectorX > const&  knots() const { return designer_.knots();}
+    /** array with the coefficients of each class */
+    inline Array1D< ArrayXX > const& coefficients() const { return designer_.coefficients();}
+    /** array with the first date of each class */
+    inline Array1D< Real > const&  tmin() const { return designer_.tmin();}
+    /** array with the last date of each class */
+    inline Array1D< Real > const& tmax() const { return designer_.tmax();}
+
     // getters
     /** @return regression coefficients */
-    YArrays const& alpha() const {return alpha_;}
+    inline YArrays const& alpha() const {return alpha_;}
     /** @return estimated variance */
-    PArrays const& sigma2() const { return sigma2_;}
+    inline PArrays const& sigma2() const { return sigma2_;}
     /** @return lnLikelihhod of each class */
-    CPointX const& lnLikelihood() const { return lnLikelihood_;}
+    inline CPointX const& lnLikelihood() const { return lnLikelihood_;}
     /** @return criterion of each class */
-    CPointX const& criterion() const { return criterion_;}
+    inline CPointX const& criterion() const { return criterion_;}
     /** @return criterion of each class */
-    CPointXi const& nbFreeParameters() const { return nbFreeParameters_;}
+    inline CPointXi const& nbFreeParameters() const { return nbFreeParameters_;}
+    /** @return the eigenvalues of the matrix x^Tx in each classes */
+    inline Array1D<CVectorX> const& eigenvalues() const { return eigenvalues_;}
     /** @return the determinant of the covariance matrix of each pixel */
-    CVectorX const& det() const { return det_;}
+    inline CVectorX const& det() const { return det_;}
     /** @return the prior probabilities of each class */
-    CPointX const& pk() const { return pk_;}
+    inline CPointX const& pk() const { return pk_;}
     /** @return the posterior probabilities of each class */
-    CArrayXX const& tik() const { return tik_;}
-    /** @return a reference on the array of dimensions */
-    CPointXi const& dim() const { return dim_;}
+    inline CArrayXX const& tik() const { return tik_;}
     /** @return the predicted labels of each pixel */
-    Labels const& zi() const { return zi_;}
+    inline Labels const& zi() const { return zi_;}
 
     /** classify the label given a new observation (t,y) */
-    int classify( CPointX const& ti, ArraySpectra const& yi) const;
+    int classify( CPointX const& ti, ArraySp const& yi) const;
 
     /** compute the mean curve of each class */
-    YArrays mean(Real first=1, Real last=365, int nbSampling=100) const;
+    YArrays mean( int nbSampling=100) const;
 
   protected:
     /** reference on the data handler */
     DataHandler const& handler_;
     /** utility class allowing to design the matrices xi */
-    FuncSpectraDesign<Size_> designer_;
-    /** vector of dimensions for each class */
-    CPointXi dim_;
+    Designer const& designer_;
+    /** type of the criterion (AIC, BIC, ML) */
     Model::TypeCriterion type_;
 
     /** predicted class after estimation */
@@ -180,6 +177,8 @@ class FuncSpectra: public IClassification< Labels
     CPointX criterion_;
     /** Size of the design matrix in each class */
     CPointXi nbFreeParameters_;
+    /** eigenvalues of the matrix x^tx for each class */
+    Array1D< CVectorX > eigenvalues_;
     /** determinant of the covariance matrix for each pixels (nbSample) */
     CVectorX det_;
     /** prior probabilities */
@@ -189,9 +188,9 @@ class FuncSpectra: public IClassification< Labels
 
   private:
     /** matrix X^tX */
-    Array1D<CSquareX> xtx_jj_;
+    Array1D< CSquareX > xtx_jj_;
     /** matrix X^ty */
-    Array1D< ArraySpectra > xty_js_;
+    YArrays xty_js_;
 
     /** Size of the design matrix in each class */
     CVectorXi sizek_;
@@ -219,14 +218,12 @@ class FuncSpectra: public IClassification< Labels
 /* default constructor */
 template<int Size_, class Weights_>
 FuncSpectra<Size_, Weights_>::FuncSpectra( DataHandler const& handler
-                                         , String const& kernelName, Real const& h
-                                         , int dim, int degree, String const& posKnots
+                                         , Designer const& design
                                          , String const& criterion
                                          )
                                          : Base(handler.labels(), handler.data())
                                          , handler_(handler)
-                                         , designer_(handler.times(), kernelName, h, dim, degree, posKnots)
-                                         , dim_(handler_.nbClass(), dim)
+                                         , designer_(design)
                                          , type_(Model::stringToTypeCriterion(criterion))
                                          , zi_(handler_.nbSample())
                                          , alpha_(handler_.nbClass())
@@ -234,6 +231,7 @@ FuncSpectra<Size_, Weights_>::FuncSpectra( DataHandler const& handler
                                          , lnLikelihood_(handler_.nbClass(), -Arithmetic<Real>::infinity())
                                          , criterion_(handler_.nbClass(), Arithmetic<Real>::infinity())
                                          , nbFreeParameters_(handler_.nbClass(), 0)
+                                         , eigenvalues_(handler_.nbClass())
                                          , det_(handler_.nbSample())
                                          , pk_(handler_.nbClass())
                                          , tik_(handler_.nbSample(),handler_.nbClass())
@@ -246,48 +244,21 @@ FuncSpectra<Size_, Weights_>::FuncSpectra( DataHandler const& handler
 #endif
 }
 
-/* default constructor */
-template<int Size_, class Weights_>
-FuncSpectra<Size_, Weights_>::FuncSpectra( DataHandler const& handler
-                                         , String const& kernelName, Real const& h
-                                         , CPointXi const& dim, int degree, String const& posKnots
-                                         , String const& criterion
-                                         )
-                                         : Base(handler.labels(), handler.data())
-                                         , handler_(handler)
-                                         , designer_(handler.times(), kernelName, h, dim, degree, posKnots)
-                                         , dim_(dim)
-                                         , type_(Model::stringToTypeCriterion(criterion))
-                                         , zi_(handler_.nbSample())
-                                         , alpha_(handler_.nbClass())
-                                         , sigma2_(handler_.nbClass())
-                                         , lnLikelihood_(handler_.nbClass(), -Arithmetic<Real>::infinity())
-                                         , criterion_(handler_.nbClass(), Arithmetic<Real>::infinity())
-                                         , nbFreeParameters_(handler_.nbClass(), 0)
-                                         , det_(handler_.nbSample())
-                                         , pk_(handler_.nbClass())
-                                         , tik_(handler_.nbSample(),handler_.nbClass())
-                                         , sizek_(handler_.nbClass(), 0)
-                                         , xtx_jj_(handler_.nbClass())
-                                         , xty_js_(handler_.nbClass())
-{
-#ifdef STK_CLOHE_DEBUG
-  stk_cout << _T("FuncSpectra<Size_, Weights_> created\n");
-#endif
-}
 
 /* compute the mean curve of each class */
 template<int Size_, class Weights_>
 typename FuncSpectra<Size_, Weights_>::YArrays
-              FuncSpectra<Size_, Weights_>::mean( Real first, Real last, int nbSampling) const
+              FuncSpectra<Size_, Weights_>::mean( int nbSampling) const
 {
   CPointX ti(nbSampling);
   YArrays mu(nbClass());
-  Real delta = (last-first)/nbSampling, val = first;
-  for (int i=ti.begin(); i<ti.end(); ++i) { ti[i] = val; val += delta;}
   //  mu[k] = xi*alpha_[k];
   for (int k= alpha_.begin(); k < alpha_.end(); ++k)
-  { mu[k] = designer_.getDesignMatrix(ti)*alpha_[k];}
+  {
+    Real delta = (tmax()[k]-tmin()[k])/(nbSampling-1), val = tmin()[k];
+    for (int i=ti.begin(); i<ti.end(); ++i) { ti[i] = val; val += delta;}
+    mu[k] = designer_.getDesignMatrix(ti, k)*alpha_[k];
+  }
   return mu;
 }
 
@@ -303,8 +274,8 @@ bool FuncSpectra<Size_, Weights_>::initializeStep()
   for (int k= pk_.begin(); k < pk_.end(); k++)
   {
     pk_[k] = Real(nk()[k])/Real(nbSample());
-    xtx_jj_[k].resize(dim_[k]) = 0.;
-    xty_js_[k].resize(dim_[k], nbSpectrum()) = 0.;
+    xtx_jj_[k].resize(designer_.dim()[k]) = 0.;
+    xty_js_[k].resize(designer_.dim()[k], nbSpectrum()) = 0.;
     sigma2_[k].resize(nbSpectrum()) = 0.;
   }
 
@@ -332,12 +303,24 @@ bool FuncSpectra<Size_, Weights_>::estimationStep()
 #endif
   for (int k=pk_.begin(); k < pk_.end(); k++)
   {
+#ifdef STK_CLOHE_DEBUG
+//  stk_cout << _T("Class= ") << k << "\n";
+//  stk_cout << _T("x'x[k]=\n") << xtx_jj_[k] << "\n";
+#endif
     lapack::SymEigen<CSquareX> decomp(xtx_jj_[k]);
     decomp.run();
-    // compute (x'x)^{-1}x'j
-    alpha_[k] = decomp.ginv(xtx_jj_[k]) * xty_js_[k];
+    // compute (x'x)^{-1}x'y
+#ifdef STK_CLOHE_DEBUG
+  //stk_cout << _T("(x'x)^{-1}[k]=\n")  << decomp.ginv(xtx_jj_[k])  << "\n";
+  //stk_cout << _T("x'y[k]=\n")        << xty_js_[k] << "\n";
+  alpha_[k] = xtx_jj_[k] * xty_js_[k];
+  stk_cout << _T("alpha[k]=\n")      << alpha_[k] << "\n";
+#else
+  alpha_[k] = decomp.ginv(xtx_jj_[k]) * xty_js_[k];
+#endif
+    eigenvalues_[k] = decomp.eigenValues();
   }
-  // compute residal variances
+  // compute residuals variances
   computeVariances();
   return flag;
 
@@ -354,17 +337,16 @@ bool FuncSpectra<Size_, Weights_>::predictionStep()
   stk_cout << _T("Entering FuncSpectrum<Size_, Weights_>::predictionStep()\n");
 #endif
 
-
   for (int i=zi_.begin(); i<zi_.end(); ++i)
   {
-	ArrayXX      xt;
-	ArraySpectra yt ;
-    yt.move(handler_.getArraySpectra(i));
-	Real det = designer_.computeDesign(times(i), xt, yt);
-
+    ArrayXX xt;
+    ArraySp yt ;
     CPointX lnComp(sigma2_.range());
+    // compute likelihood for each class
     for (int k=sigma2_.begin(); k< sigma2_.end(); k++)
     {
+      yt.move(handler_.getArraySp(i));
+      Real det = designer_.computeDesign(times(i), xt, yt, k);
       lnComp[k] = std::log(pk_[k])
                 - 0.5*( (Stat::sumByCol( (yt - xt * alpha_[k]).square() )/sigma2_[k]).sum()
                        + std::log(det) + sigma2_[k].log().sum() * times(i).size()
@@ -431,15 +413,23 @@ int FuncSpectra<Size_, Weights_>::computeNbFreeParameter() const
 
 /* classify the label given a new observation (t,y) */
 template<int Size_, class Weights_>
-int FuncSpectra<Size_, Weights_>::classify( CPointX const& ti, ArraySpectra const& yi) const
+int FuncSpectra<Size_, Weights_>::classify( CPointX const& ti, ArraySp const& yi) const
 {
-  ArrayXX      xt;
-  ArraySpectra yt = yi;
-  Real det = designer_.computeDesign(ti, xt, yt);
-
+  ArraySp yt;
+  ArrayXX xt;
   CPointX lnComp(sigma2_.range());
   for (int k=sigma2_.begin(); k< sigma2_.end(); k++)
   {
+    if ( (ti.front() < coefficients()[k].beginRows()) || (ti.back() > coefficients()[k].endRows()))
+    {
+#ifdef STK_CLOHE_DEBUG
+  stk_cerr << "k =" << k << ", ti.range() =" << ti.range()
+           << ", coefficients()[k].rows() =" << coefficients()[k].rows() << "\n";
+  stk_cerr << "ti =" << ti << "\n";
+#endif
+    }
+    yt = yi;
+    Real det = designer_.computeSafeDesign(ti, xt, yt, k);
     lnComp[k] = std::log(pk_[k])
               - 0.5*( (Stat::sumByCol( (yt - xt * alpha_[k]).square() )/sigma2_[k]).sum()
                      + std::log(det) + sigma2_[k].log().sum() * ti.size()
@@ -457,11 +447,11 @@ void FuncSpectra<Size_, Weights_>::computeXtXandXtY()
 {
   for(int i = labels().begin(); i<labels().end(); ++i)
   {
+    ArraySp y_ts;
+    ArrayXX x_tj;
     int k=labels(i);
-    ArraySpectra y_ts;
-    ArrayXX      x_tj;
-    y_ts.move( handler_.getArraySpectra(i) );
-    det_[i] = designer_.computeDesign(times(i), x_tj, y_ts);
+    y_ts.move( handler_.getArraySp(i) );
+    det_[i] = designer_.computeDesign(times(i), x_tj, y_ts, k);
 
     xtx_jj_[k] += x_tj.transpose() * x_tj;
     xty_js_[k] += x_tj.transpose() * y_ts;
@@ -475,11 +465,11 @@ void FuncSpectra<Size_, Weights_>::computeVariances()
 {
   for(int i = labels().begin(); i<labels().end(); ++i)
   {
+    ArraySp y_ts;
+    ArrayXX x_tj;
     int k=labels(i);
-    ArraySpectra y_ts;
-    ArrayXX      x_tj;
-    y_ts.move( handler_.getArraySpectra(i) );
-    det_[i] = designer_.computeDesign(times(i), x_tj, y_ts);
+    y_ts.move( handler_.getArraySp(i) );
+    det_[i] = designer_.computeDesign(times(i), x_tj, y_ts, k);
 
     sigma2_[k]  += Stat::sumByCol( (y_ts - x_tj * alpha_[k]).square() );
   }

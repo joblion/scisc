@@ -5,17 +5,21 @@
 \title{Create an instance of the [\code{\linkS4class{FuncSpectraModel}}] class}
 \usage{
 learnFuncSpectra(data, kernelName = "gaussian", width = 50, dim = 5,
-  posKnots = "density", degree = 3, criterion = "BIC")
+  basisName = "Bspline", posKnots = "density", degree = 3,
+  criterion = "BIC", maxValue = NULL, test = NULL)
 }
 \arguments{
-\item{data}{the list containing the data.}
+\item{data}{list containing the data.}
 
-\item{kernelName}{[\code{\link{string}}] with the kernel to use for the covariance matrix.
-Availbale kernels are "gaussian", "exponential", "rationalQuadratic". Default is "gaussian".}
+\item{kernelName}{[\code{string}] with the kernel to use for the covariance matrix.
+Available kernels are "gaussian", "exponential", "rationalQuadratic".
+Default is "gaussian".}
 
 \item{width}{the width of the kernel to use. Default is 50.}
 
 \item{dim}{[\code{\link{integer}}] number of base to use. Default is 5.}
+
+\item{basisName}{[\code{string}] with the name of the basis to use}
 
 \item{posKnots}{position for the knots of the B-spline. Available position are "periodic", "density",
 "uniform". Default is "density".}
@@ -25,6 +29,8 @@ Availbale kernels are "gaussian", "exponential", "rationalQuadratic". Default is
 \item{criterion}{character defining the criterion to select the best model.
 The best model is the one with the lowest criterion value.
 Possible values: "BIC", "AIC", "ML". Default is "BIC".}
+
+\item{test}{list with test data to classify}
 }
 \value{
 An instance of the [\code{\linkS4class{FuncModel}}] class.

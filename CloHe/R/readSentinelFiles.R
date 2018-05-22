@@ -71,16 +71,16 @@ readMultiSentinelSmoothedData <- function(path="./data/", file = "gp.hdf5", size
   # return data in a list
   list( labels  = labels
       , times   = times
-      , spectra = list( spect1      = (spect1)
-                      , spect2      = (spect2)
-                      , spect3      = (spect3)
-                      , spect4      = (spect4)
-                      , spect5      = (spect5)
-                      , spect6      = (spect6)
-                      , spect7      = (spect7)
-                      , spect8      = (spect8)
-                      , spect9      = (spect9)
-                      , spect10     = (spect10)
+      , spectra = list( spect1  = spect1
+                      , spect2  = spect2
+                      , spect3  = spect3
+                      , spect4  = spect4
+                      , spect5  = spect5
+                      , spect6  = spect6
+                      , spect7  = spect7
+                      , spect8  = spect8
+                      , spect9  = spect9
+                      , spect10 = spect10
                       )
       , clouds = clouds
       )
@@ -133,65 +133,55 @@ readMultiSentinelRawData <- function(path="./data/", file = "raw.hdf5", fileMask
   spect1 <- list(years1 = spectra[,1:30])
   index <- which( spect1$years1 < 0)
   clouds$years1[index] <- 1
-#  for (i in 1:size) { for (j in 1:30) { if(spect1$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
   spect2 <- list(years1 = spectra[,31:60])
   index <- which( spect2$years1 < 0)
   clouds$years1[index] <- 1
-#  for (i in 1:size) { for (j in 1:30) { if(spect2$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
 
   spect3 <- list(years1 = spectra[,61:90])
   index <- which( spect3$years1 < 0)
   clouds$years1[index] <- 1
-#  for (i in 1:size) { for (j in 1:30) { if(spect3$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
 
   spect4 <- list(years1 = spectra[,91:120])
   index <- which( spect4$years1 < 0)
   clouds$years1[index] <- 1
-#  for (i in 1:size) { for (j in 1:30) { if(spect4$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
 
   spect5 <- list(years1 = spectra[,121:150])
   index <- which( spect5$years1 < 0)
   clouds$years1[index] <- 1
-#  for (i in 1:size) { for (j in 1:30) { if(spect5$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
 
   spect6 <- list(years1 = spectra[,151:180])
   index <- which( spect6$years1 < 0)
   clouds$years1[index] <- 1
-#  for (i in 1:size) { for (j in 1:30) { if(spect6$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
 
   spect7 <- list(years1 = spectra[,181:210])
   index <- which( spect7$years1 < 0)
   clouds$years1[index] <- 1
-#  for (i in 1:size) { for (j in 1:30) { if(spect7$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
 
   spect8 <- list(years1 = spectra[,211:240])
   index <- which( spect8$years1 < 0)
   clouds$years1[index] <- 1
-#  for (i in 1:size) { for (j in 1:30) { if(spect8$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
 
   spect9 <- list(years1 = spectra[,241:270])
   index <- which( spect9$years1 < 0)
   clouds$years1[index] <- 1
-#  for (i in 1:size) { for (j in 1:30) { if(spect9$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
 
   spect10 <- list(years1 = spectra[,271:300])
   index <- which( spect1$years10 < 0)
   clouds$years1[index] <- 1
-#  for (i in 1:size) { for (j in 1:30) { if(spect10$years1[i,j] == -10000) { clouds$years1[i,j] <- 1} } }
 
   # return data in a list
   list( labels  = labels
       , times   = times
-      , spectra = list( spect1      = (spect1)
-                      , spect2      = (spect2)
-                      , spect3      = (spect3)
-                      , spect4      = (spect4)
-                      , spect5      = (spect5)
-                      , spect6      = (spect6)
-                      , spect7      = (spect7)
-                      , spect8      = (spect8)
-                      , spect9      = (spect9)
-                      , spect10     = (spect10)
+      , spectra = list( spect1  = spect1
+                      , spect2  = spect2
+                      , spect3  = spect3
+                      , spect4  = spect4
+                      , spect5  = spect5
+                      , spect6  = spect6
+                      , spect7  = spect7
+                      , spect8  = spect8
+                      , spect9  = spect9
+                      , spect10 = spect10
                       )
       , clouds = clouds
       )

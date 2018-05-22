@@ -1,17 +1,17 @@
 Package: CloHe
-Version: 2.2.0
-Date: 2017-11-07
+Version: 2.2.1
+Date: 2018-04-21
 Title: Supervised Clustering of Spectrometric Data
 Authors@R: c(person("Serge", "Iovleff", role = c("aut","cre"), email = "Serge.Iovleff@stkpp.org"))
 Copyright: inria, University Lille 1
 Depends:
     R (>= 3.0.2),
-    rtkore (>= 1.1.0),
-    mvtnorm (>= 1.0)
+    rtkore (>= 1.5.0),
+    mvtnorm (>= 1.0),
+    h5
 Imports:
     methods
-Description: Algorithms and methods for estimating spectrometric data with
-    missing data
+Description: Algorithms and methods for estimating spectrometric data with missing data
 License: GPL (>= 2)
 LinkingTo: Rcpp
 Roxygen: list(wrap = FALSE)
@@ -22,6 +22,7 @@ Collate:
     sampleSpectrumData.R
     global.R
     ICloHeModel.R
+    findBestKappa.R
     GaussianMutSigmatModel.R
     FuncSpectraModel.R
     predictGaussianMutSigmat.R

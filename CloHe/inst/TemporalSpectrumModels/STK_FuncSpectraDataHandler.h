@@ -51,7 +51,7 @@ class FuncSpectraDataHandler: IRunnerBase
     typedef typename hidden::ClassifTraits<Size_ >::Spectra Spectra;
 
     // array of spectra (CArray<Real, UnknownSize, Size_>)
-    typedef typename hidden::ClassifTraits<Size_ >::ArraySpectra ArraySpectra;
+    typedef typename hidden::ClassifTraits<Size_ >::ArraySp ArraySp;
     // array of values during time for a given pixel (CArrayVector<Spectra>)
     typedef typename hidden::ClassifTraits<Size_ >::SeriesSpectra SeriesSpectra;
     // 3D array of all values (Array1D<SeriesSpectra>)
@@ -101,11 +101,13 @@ class FuncSpectraDataHandler: IRunnerBase
 
     /** @param i,yi index and spectra of the individual i
      *  @return the spectra of the individual i */
-    ArraySpectra getArraySpectra(int i) const;
+    ArraySp getArraySp(int i) const;
 
     /** compute the data sets */
     virtual bool run();
 
+    /** set the maximal value of the spectra */
+    void setMaxValue(double maxValue) { maxValue_ = maxValue;}
   protected:
     /** number of sample */
     int nbSample_;
@@ -136,6 +138,8 @@ class FuncSpectraDataHandler: IRunnerBase
     Rcpp::List Rtimes_;
     Rcpp::List Rspectra_;
     Rcpp::List Rclouds_;
+    /** maximal value of the spectra */
+    double maxValue_;
 };
 
 template<int Size_>
@@ -154,6 +158,7 @@ FuncSpectraDataHandler<Size_>::FuncSpectraDataHandler( Rcpp::List const& labels,
                                                      , Rclouds_(clouds)
                                                      , tmin_(0)
                                                      , tmax_(355)
+                                                     , maxValue_(STK::Arithmetic<Real>::max())
 {
 #ifdef STK_CLOHE_DEBUG
   stk_cout << _T("Entering FuncSpectraDataHandler<Size_> constructor\n") ;
@@ -208,10 +213,10 @@ bool FuncSpectraDataHandler<10>::run();
 /* @param i individual inumber
  *  @return the times sampling and the spectra */
 template<int Size_>
-typename FuncSpectraDataHandler<Size_>::ArraySpectra FuncSpectraDataHandler<Size_>::getArraySpectra(int i) const
+typename FuncSpectraDataHandler<Size_>::ArraySp FuncSpectraDataHandler<Size_>::getArraySp(int i) const
 {
   // get sampled  spectra
-  ArraySpectra yt(datait_[i].range(), nbSpectrum());
+  ArraySp yt(datait_[i].range(), nbSpectrum());
   for(int t=yt.beginRows(); t< yt.endRows(); ++t)
   { yt.row(t) = datait_[i][t];}
   return yt;

@@ -51,14 +51,14 @@ typedef CArrayVector<double, 4> Spectra4;
 // covariances values (b,g,r,ir)
 typedef CArraySquare<double, 4> CovSpectra4;
 // array of values
-typedef CArray<Spectra4> ArraySpectra4;
+typedef CArray<Spectra4> ArraySp4;
 // array of mean values
 typedef CArrayPoint<Spectra4> PointSpectra4;
 // array of values
 typedef CArrayPoint<CovSpectra4> PointCov4;
 
 // All classes data sets
-typedef Array1D< ArraySpectra4 > Data4DSet;
+typedef Array1D< ArraySp4 > Data4DSet;
 // All class clouds data sets
 typedef Array1D< CArrayXX > Data1DSet;
 
@@ -85,7 +85,7 @@ struct ClassifTraits
   // times series of the spectra of a given individual
   typedef CArrayVector<Spectra> SeriesSpectra;
   // Array of spectra
-  typedef CArray<Real, UnknownSize, Size_> ArraySpectra;
+  typedef CArray<Real, UnknownSize, Size_> ArraySp;
   // array with for each individuals, the times series of the spectra
   typedef Array1D<SeriesSpectra> ArraySeriesSpectra;
 

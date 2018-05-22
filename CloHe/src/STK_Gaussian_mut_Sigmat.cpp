@@ -37,7 +37,7 @@
 namespace STK
 {
 
-Gaussian_mut_Sigmat::Gaussian_mut_Sigmat( ArraySpectra4 const& data
+Gaussian_mut_Sigmat::Gaussian_mut_Sigmat( ArraySp4 const& data
                                         , CArrayXX const& clouds
                                         )
                                         : IStatModelBase(data.sizeRows(), data.sizeCols())

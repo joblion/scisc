@@ -28,8 +28,8 @@
  * Author:   iovleff, S..._Dot_I..._At_stkpp_Dot_org (see copyright for ...)
  **/
 
-/** @file STK_GaussianModelsFacade.cpp
- *  @brief In this file xe implement the SpectraDataHandler.
+/** @file STK_SpectraDataHandler.cpp
+ *  @brief In this file we implement the SpectraDataHandler.
  **/
 
 #include "../inst/TemporalSpectrumModels/STK_SpectraDataHandler.h"

@@ -57,7 +57,7 @@ bool FuncSpectraDataHandler<4>::run()
   timesit_.resize(nbSample_);
   nti_.resize(nbSample_);
 
-  // create index and iterators, loop over
+  // create index and iterators
   int iSample = classLabels_.begin();
   tmin_=355; tmax_=0;
 
@@ -66,11 +66,12 @@ bool FuncSpectraDataHandler<4>::run()
   Rcpp::List Rx2_ = *it; ++it;
   Rcpp::List Rx3_ = *it; ++it;
   Rcpp::List Rx4_ = *it;
+  // loop over the passages (years)
   for( Rcpp::List::iterator it_times = Rtimes_.begin()
-     ,                      it1    = Rx1_.begin()
-     ,                      it2    = Rx2_.begin()
-     ,                      it3    = Rx3_.begin()
-     ,                      it4    = Rx4_.begin()
+     ,                      it1      = Rx1_.begin()
+     ,                      it2      = Rx2_.begin()
+     ,                      it3      = Rx3_.begin()
+     ,                      it4      = Rx4_.begin()
      ,                      it_clouds = Rclouds_.begin()
      ; it_times!=Rtimes_.end()
      ; ++it_times, ++it1, ++it2, ++it3, ++it4, ++it_clouds)
@@ -89,7 +90,16 @@ bool FuncSpectraDataHandler<4>::run()
     {
       // compute the number of available sampling for individuals i
       nti_[iSample] = 0;
-      for (int j=0; j< Rclouds.ncol(); ++j) { if (Rclouds(i,j) == 0) ++nti_[iSample];}
+      for (int j=0; j< Rclouds.ncol(); ++j)
+      {
+        if (Rclouds(i,j) == 0) // if 0 there is a cloud
+        { // count only observations less than authorized maximal value
+          if (  Rx1(i,j)<maxValue_ && Rx2(i,j)<maxValue_
+             && Rx3(i,j)<maxValue_ && Rx4(i,j)<maxValue_
+             )
+          ++nti_[iSample];
+        }
+      }
 
       // fill data sets
       datait_[iSample].resize(nti_[iSample]);
@@ -99,9 +109,12 @@ bool FuncSpectraDataHandler<4>::run()
       {
         if (Rclouds(i,j) == 0) // use only no clouds
         {
-          datait_[iSample][t] << Rx1(i,j), Rx2(i,j), Rx3(i,j), Rx4(i,j);
-          timesit_[iSample][t] = Rtimes[j];
-          ++t;
+          if (Rx1(i,j)<maxValue_ && Rx2(i,j)<maxValue_ && Rx3(i,j)<maxValue_ && Rx4(i,j)<maxValue_)
+          {
+            datait_[iSample][t] << Rx1(i,j), Rx2(i,j), Rx3(i,j), Rx4(i,j);
+            timesit_[iSample][t] = Rtimes[j];
+            ++t;
+          }
         }
       }
       tmin_ = std::min(tmin_, timesit_[iSample].minElt());
@@ -186,7 +199,15 @@ bool FuncSpectraDataHandler<10>::run()
     {
       // compute the number of available sampling for individuals i
       nti_[iSample] = 0;
-      for (int j=0; j< Rclouds.ncol(); ++j) { if (Rclouds(i,j) == 0) ++nti_[iSample];}
+      for (int j=0; j< Rclouds.ncol(); ++j)
+      { if (Rclouds(i,j) == 0)
+        {
+          if (  Rx1(i,j)<maxValue_ && Rx2(i,j)<maxValue_ && Rx3(i,j)<maxValue_ && Rx4(i,j)<maxValue_
+             && Rx5(i,j)<maxValue_ && Rx6(i,j)<maxValue_ && Rx7(i,j)<maxValue_ && Rx8(i,j)<maxValue_
+             && Rx9(i,j)<maxValue_ && Rx10(i,j)<maxValue_
+             )
+            ++nti_[iSample];}
+        }
 
       // fill data sets
       datait_[iSample].resize(nti_[iSample]);
@@ -196,11 +217,17 @@ bool FuncSpectraDataHandler<10>::run()
       {
         if (Rclouds(i,j) == 0) // use only no clouds
         {
-          datait_[iSample][t] << Rx1(i,j), Rx2(i,j), Rx3(i,j), Rx4(i,j)
-                               , Rx5(i,j), Rx6(i,j), Rx7(i,j), Rx8(i,j)
-                               , Rx9(i,j), Rx10(i,j);
-          timesit_[iSample][t] = Rtimes[j];
-          ++t;
+          if (  Rx1(i,j)<maxValue_ && Rx2(i,j)<maxValue_ && Rx3(i,j)<maxValue_ && Rx4(i,j)<maxValue_
+             && Rx5(i,j)<maxValue_ && Rx6(i,j)<maxValue_ && Rx7(i,j)<maxValue_ && Rx8(i,j)<maxValue_
+             && Rx9(i,j)<maxValue_ && Rx10(i,j)<maxValue_
+             )
+          {
+            datait_[iSample][t] << Rx1(i,j), Rx2(i,j), Rx3(i,j), Rx4(i,j)
+                                 , Rx5(i,j), Rx6(i,j), Rx7(i,j), Rx8(i,j)
+                                 , Rx9(i,j), Rx10(i,j);
+            timesit_[iSample][t] = Rtimes[j];
+            ++t;
+          }
         }
       }
       tmin_ = std::min(tmin_, timesit_[iSample].minElt());
